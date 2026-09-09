@@ -18,9 +18,10 @@ class Fcm
      * @param  string  $title
      * @param  string  $body
      * @param  array  $data
+     * @param  string|null  $platform
      * @return array
      */
-    public static function send($tokens, $title, $body, array $data = [])
+    public static function send($tokens, $title, $body, array $data = [], $platform = null)
     {
         $tokens = is_array($tokens) ? $tokens : [$tokens];
         $tokens = array_values(array_unique(array_filter($tokens, function ($token) {
@@ -37,18 +38,37 @@ class Fcm
             return $value === null ? '' : (string) $value;
         }, $data);
 
+        $title = (string) $title;
+        $body = (string) $body;
+        $isIos = strtolower((string) $platform) === 'ios';
+
+        $notification = [
+            'title' => $title,
+            'body' => $body,
+            'sound' => 'default',
+            'badge' => 1,
+        ];
+
+        if (! $isIos) {
+            $notification['text'] = $body;
+            $notification['click_action'] = 'FLUTTER_NOTIFICATION_CLICK';
+            $channelId = config('services.fcm.android_channel_id');
+            if ($channelId) {
+                $notification['android_channel_id'] = $channelId;
+            }
+        }
+
         $payload = [
             'priority' => 'high',
+            'time_to_live' => 86400,
+            'mutable_content' => true,
             'content_available' => true,
-            'notification' => [
+            'notification' => $notification,
+            'data' => array_merge($data, [
                 'title' => $title,
                 'body' => $body,
                 'sound' => 'default',
-            ],
-            'data' => array_merge($data, [
-                'title' => (string) $title,
-                'body' => (string) $body,
-                'sound' => 'default',
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
             ]),
         ];
 

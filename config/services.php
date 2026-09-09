@@ -43,5 +43,6 @@ return [
 
     'fcm' => [
         'key' => env('FCM_SERVER_KEY'),
+        'android_channel_id' => env('FCM_ANDROID_CHANNEL_ID'),
     ],
 ];

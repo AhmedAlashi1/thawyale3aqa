@@ -334,14 +334,13 @@ trait Functions
     {
         $phone = $phone ?: ($user->mobile_number ?? null);
         $message = 'كود التفعيل الخاص بك هو ' . $activation_code;
+        $channels = [];
 
         try {
-            if (Setting::whatsappLoginEnabled()) {
-                if (method_exists($this, 'whatsapp') && $phone) {
-                    $this->whatsapp($phone, ' كود التفعيل الخاص بك هو ' . $activation_code . '
+            if (Setting::whatsappLoginEnabled() && $phone && method_exists($this, 'whatsapp')) {
+                $this->whatsapp($phone, ' كود التفعيل الخاص بك هو ' . $activation_code . '
 اهلا  بك في تطبيق ذوي الإعاقة 😀                        ');
-                }
-                return 'whatsapp';
+                $channels[] = 'whatsapp';
             }
 
             $token = request()->input('device_token')
@@ -355,25 +354,32 @@ trait Functions
             }
 
             if (empty($token) || $token === 'logout') {
-                \Log::warning('Activation FCM skipped: missing device_token', [
-                    'user_id' => $user->id ?? null,
-                ]);
-                return 'skipped';
+                if (!$channels) {
+                    \Log::warning('Activation FCM skipped: missing device_token', [
+                        'user_id' => $user->id ?? null,
+                    ]);
+                    return 'skipped';
+                }
+
+                return implode(',', $channels);
             }
 
-            $this->sendActivationFirebase($token, $activation_code, $message);
+            $platform = request()->input('device_type') ?: ($user->device_type ?? null);
+            $result = $this->sendActivationFirebase($token, $activation_code, $message, $platform);
+            $channels[] = !empty($result['success']) ? 'firebase' : 'firebase_failed';
 
-            return 'firebase';
+            return implode(',', $channels);
         } catch (\Throwable $e) {
             \Log::error('Activation code send failed', [
                 'user_id' => $user->id ?? null,
                 'error' => $e->getMessage(),
             ]);
-            return 'failed';
+
+            return $channels ? implode(',', $channels).',failed' : 'failed';
         }
     }
 
-    public function sendActivationFirebase($deviceToken, $code, $message = null)
+    public function sendActivationFirebase($deviceToken, $code, $message = null, $platform = null)
     {
         $title = 'كود التفعيل';
         $body = $message ?: ('كود التفعيل الخاص بك هو ' . $code);
@@ -381,7 +387,7 @@ trait Functions
         return FcmClient::send($deviceToken, $title, $body, [
             'type' => 'activation_code',
             'activation_code' => (string) $code,
-        ]);
+        ], $platform);
     }
 
 }

@@ -79,6 +79,9 @@ class AuthController extends ApiController
        if ($deviceToken){
            $user->device_token = $deviceToken;
        }
+       if ($request->filled('device_type')) {
+           $user->device_type = $request->input('device_type');
+       }
 
         $user->save();
         $user = AppUser::find($user->id) ?: $user;
