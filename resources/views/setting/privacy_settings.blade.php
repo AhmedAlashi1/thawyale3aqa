@@ -110,6 +110,14 @@
 
 
                                 </div>
+                            @elseif($x->key_id == 'whatsapp_login')
+                                <div class="col-md-10">
+                                    <select name="whatsapp_login" class="form-control">
+                                        <option @if($x->value == '1') selected="selected" @endif value="1">نعم</option>
+                                        <option @if($x->value == '0') selected="selected" @endif value="0">لا</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1">إذا كان الخيار لا، يتم إرسال كود التفعيل كإشعار Firebase</small>
+                                </div>
 
                         @else
 

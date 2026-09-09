@@ -16,7 +16,7 @@ class SettingController extends Controller
 
     public function privacy()
     {
-        $settings=Setting::where('set_group','general')->whereIN('key_id' , ['about_ar','about_en','conditions_ar','conditions_en','privacy_ar','privacy_en','installation','automatic_acceptance','whats_notification_number'])->get();
+        $settings=Setting::where('set_group','general')->whereIN('key_id' , ['about_ar','about_en','conditions_ar','conditions_en','privacy_ar','privacy_en','installation','automatic_acceptance','whats_notification_number','whatsapp_login'])->get();
 //        return  $settings;
         return view('setting.privacy_settings',compact('settings'));
     }
@@ -41,6 +41,6 @@ class SettingController extends Controller
     }
 
     public function update_setting($data,$key){
-        return Setting::where('key_id',$key)->update($data);
+        return Setting::updateOrCreate(['key_id' => $key], $data);
     }
 }

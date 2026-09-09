@@ -79,11 +79,7 @@ class AuthController extends ApiController
        }
 
         $user->save();
-//        $message_whatsapp = ' كود التفعيل الخاص بك هو ' . $activation_code . '
-//اهلا  بك في تطبيق ذوي الهمم 😀                        ';
-        $message_whatsapp = ' كود التفعيل الخاص بك هو ' . $activation_code . '
-اهلا  بك في تطبيق ذوي الإعاقة 😀                        ';
-        $response = $this->whatsapp($request->input('mobile_number'), $message_whatsapp);
+        $this->sendLoginActivationCode($user, $activation_code, $request->input('mobile_number'));
 
         $userdata = [
             'user_id' => $user->id,
@@ -300,7 +296,7 @@ class AuthController extends ApiController
         $instanceId= '8D30ABB1E6DA';
         $accessToken = 'rhS3eDMYV7goCg';
 
-        $chatId = $this->formatWawpChatId($phone , $dedupKey);
+        $chatId = $this->formatWawpChatId($phone, $dedupKey);
 
         //$url = "https://wawp.net/wp-json/awp/v1/send";
         $url = "https://api.wawp.net/v2/send/text";
@@ -315,7 +311,7 @@ class AuthController extends ApiController
         return $response;
     }
 
-    protected function formatWawpChatId(string $phone): string
+    protected function formatWawpChatId(string $phone, $dedupKey = null): string
     {
         $phone = trim($phone);
 

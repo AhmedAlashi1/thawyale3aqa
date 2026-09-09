@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Notifications;
+use App\Models\Setting;
 use Carbon\Carbon;
 use GuzzleHttp\Exception\ConnectException;
 use Kreait\Firebase\Factory;
@@ -326,6 +327,83 @@ trait Functions
             'thumb' => ['width' => 312, 'height' => 250]
         ];
         return $size;
+    }
+
+    public function sendLoginActivationCode($user, $activation_code, $phone = null)
+    {
+        $phone = $phone ?: ($user->mobile_number ?? null);
+        $message = ' كود التفعيل الخاص بك هو ' . $activation_code . '
+اهلا  بك في تطبيق ذوي الإعاقة 😀                        ';
+
+        try {
+            if (Setting::whatsappLoginEnabled()) {
+                if (method_exists($this, 'whatsapp') && $phone) {
+                    $this->whatsapp($phone, $message);
+                }
+                return;
+            }
+
+            $token = $user->device_token ?? null;
+            if (empty($token) || $token === 'logout') {
+                \Log::warning('Activation FCM skipped: missing device_token', [
+                    'user_id' => $user->id ?? null,
+                ]);
+                return;
+            }
+
+            $this->sendActivationFirebase($token, $activation_code, $message);
+        } catch (\Throwable $e) {
+            \Log::error('Activation code send failed', [
+                'user_id' => $user->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function sendActivationFirebase($deviceToken, $code, $message = null)
+    {
+        $title = 'كود التفعيل';
+        $body = $message ?: ('كود التفعيل الخاص بك هو ' . $code);
+        $payload = [
+            'to' => $deviceToken,
+            'notification' => [
+                'title' => $title,
+                'body' => $body,
+                'sound' => 'default',
+            ],
+            'data' => [
+                'type' => 'activation_code',
+                'activation_code' => (string) $code,
+                'title' => $title,
+                'body' => $body,
+                'sound' => 'default',
+            ],
+            'priority' => 'high',
+        ];
+
+        $headers = [
+            'Authorization: key=' . env('FCM_SERVER_KEY'),
+            'Content-Type: application/json',
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            \Log::error('Activation FCM curl error', ['error' => $error]);
+        } else {
+            \Log::info('Activation FCM sent', ['response' => $response]);
+        }
+
+        return $response;
     }
 
 }
