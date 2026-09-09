@@ -43,6 +43,6 @@ class SettingController extends Controller
     }
 
     public function update_setting($data,$key){
-        return Setting::updateOrCreate(['key_id' => $key], $data);
+        return Setting::where('key_id', $key)->update(['value' => $data['value']]);
     }
 }
