@@ -9,6 +9,7 @@ class SettingController extends Controller
 {
     public function index()
     {
+        Setting::ensureWhatsappLoginSetting();
         $settings=Setting::where('set_group','general')->get();
         return view('setting.index',compact('settings'));
     }
@@ -16,6 +17,7 @@ class SettingController extends Controller
 
     public function privacy()
     {
+        Setting::ensureWhatsappLoginSetting();
         $settings=Setting::where('set_group','general')->whereIN('key_id' , ['about_ar','about_en','conditions_ar','conditions_en','privacy_ar','privacy_en','installation','automatic_acceptance','whats_notification_number','whatsapp_login'])->get();
 //        return  $settings;
         return view('setting.privacy_settings',compact('settings'));

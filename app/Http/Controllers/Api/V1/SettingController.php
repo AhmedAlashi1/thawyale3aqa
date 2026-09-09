@@ -117,7 +117,7 @@ class SettingController extends Controller
                 'ads_status'=> Setting::where('key_id','ads_status')->first()->value,
                 'ads'=>$ads ? $data_ads : null,
                 'installation'=> Setting::where('key_id','installation')->first()->value == 1 ? true : false,
-                'whatsapp_login'=> optional(Setting::where('key_id','whatsapp_login')->first())->value == 1 ? true : false,
+                'whatsapp_login'=> Setting::whatsappLoginEnabled(),
 
 
             ];
