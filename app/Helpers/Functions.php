@@ -332,31 +332,42 @@ trait Functions
     public function sendLoginActivationCode($user, $activation_code, $phone = null)
     {
         $phone = $phone ?: ($user->mobile_number ?? null);
-        $message = ' كود التفعيل الخاص بك هو ' . $activation_code . '
-اهلا  بك في تطبيق ذوي الإعاقة 😀                        ';
+        $message = 'كود التفعيل الخاص بك هو ' . $activation_code;
 
         try {
             if (Setting::whatsappLoginEnabled()) {
                 if (method_exists($this, 'whatsapp') && $phone) {
-                    $this->whatsapp($phone, $message);
+                    $this->whatsapp($phone, ' كود التفعيل الخاص بك هو ' . $activation_code . '
+اهلا  بك في تطبيق ذوي الإعاقة 😀                        ');
                 }
-                return;
+                return 'whatsapp';
             }
 
-            $token = $user->device_token ?? null;
+            $token = request()->input('device_token')
+                ?: request()->input('fcm_token')
+                ?: request()->input('firebase_token')
+                ?: ($user->device_token ?? null);
+
+            if ($user && $user->id && (empty($token) || $token === 'logout')) {
+                $fresh = \App\Models\AppUser::find($user->id);
+                $token = $fresh->device_token ?? $token;
+            }
+
             if (empty($token) || $token === 'logout') {
                 \Log::warning('Activation FCM skipped: missing device_token', [
                     'user_id' => $user->id ?? null,
                 ]);
-                return;
+                return 'skipped';
             }
 
             $this->sendActivationFirebase($token, $activation_code, $message);
+            return 'firebase';
         } catch (\Throwable $e) {
             \Log::error('Activation code send failed', [
                 'user_id' => $user->id ?? null,
                 'error' => $e->getMessage(),
             ]);
+            return 'failed';
         }
     }
 
@@ -364,8 +375,19 @@ trait Functions
     {
         $title = 'كود التفعيل';
         $body = $message ?: ('كود التفعيل الخاص بك هو ' . $code);
+        $tokens = is_array($deviceToken) ? array_values($deviceToken) : [$deviceToken];
+        $tokens = array_values(array_filter($tokens, function ($token) {
+            return !empty($token) && $token !== 'logout';
+        }));
+
+        if (!$tokens) {
+            return false;
+        }
+
         $payload = [
-            'to' => $deviceToken,
+            'registration_ids' => $tokens,
+            'priority' => 'high',
+            'content_available' => true,
             'notification' => [
                 'title' => $title,
                 'body' => $body,
@@ -378,32 +400,45 @@ trait Functions
                 'body' => $body,
                 'sound' => 'default',
             ],
-            'priority' => 'high',
         ];
 
-        $headers = [
-            'Authorization: key=' . env('FCM_SERVER_KEY'),
-            'Content-Type: application/json',
-        ];
+        $keys = array_values(array_unique(array_filter([
+            env('FCM_SERVER_KEY'),
+            'AAAAyNv4XM4:APA91bG2LLYhnWhlCeyruuWk2JANSzG2O8h1NpqD2zDv68Da5zTgQfc4UgPjdwEbK_JDOdkbf8uFpgWtnWHyzjq484P4_2ntc0vaqqLa_Hegu2Lhlxz6JQZCM2pU-nTFBy6WdLPDcAug',
+        ])));
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
+        $lastResponse = null;
+        foreach ($keys as $serverKey) {
+            $headers = [
+                'Authorization: key=' . $serverKey,
+                'Content-Type: application/json',
+            ];
 
-        if ($error) {
-            \Log::error('Activation FCM curl error', ['error' => $error]);
-        } else {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            $lastResponse = $response;
+            if ($error) {
+                \Log::error('Activation FCM curl error', ['error' => $error]);
+                continue;
+            }
+
+            $decoded = json_decode($response, true);
             \Log::info('Activation FCM sent', ['response' => $response]);
+            if (!empty($decoded['success'])) {
+                return $response;
+            }
         }
 
-        return $response;
+        return $lastResponse;
     }
 
 }

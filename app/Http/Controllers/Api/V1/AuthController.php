@@ -73,23 +73,23 @@ class AuthController extends ApiController
 
 //        $activation_code = rand(1111, 9999);
        $user->activation_code = $activation_code;
-       if ($request->input('device_token')){
-           $user->device_token =$request->input('device_token');
-
+       $deviceToken = $request->input('device_token')
+           ?: $request->input('fcm_token')
+           ?: $request->input('firebase_token');
+       if ($deviceToken){
+           $user->device_token = $deviceToken;
        }
 
         $user->save();
-        $this->sendLoginActivationCode($user, $activation_code, $request->input('mobile_number'));
+        $user = AppUser::find($user->id) ?: $user;
+        $sentVia = $this->sendLoginActivationCode($user, $activation_code, $request->input('mobile_number'));
 
         $userdata = [
             'user_id' => $user->id,
             'token' => $token,
             'mobile' => $user->mobile_number,
             'activation_code' => $activation_code,
-//            'first_name' => $user->first_name,
-//            'last_name' => $user->last_name,
-//            'address' => $user->address,
-//            'avatar' => asset("assets/tmp/".$user->avatar),
+            'sent_via' => $sentVia,
         ];
         return $this->outApiJson(true,'success',$userdata);
     }
