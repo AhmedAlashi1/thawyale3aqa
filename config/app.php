@@ -175,6 +175,8 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        Laravel\Telescope\TelescopeServiceProvider::class,
+        App\Providers\TelescopeServiceProvider::class,
         Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
 //        Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
