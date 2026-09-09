@@ -18,6 +18,7 @@ return [
     'international' => 'International',
     'notinternational' => 'non-international',
     'error' => "Something is wrong",
+    'no_token' => 'This user has no notification token. Open the app while online and try again',
     'views' => 'views',
 
 ];

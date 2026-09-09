@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AppUser;
 use App\Models\Categories;
 use App\Models\Clothes;
+use App\Support\Fcm;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -50,32 +51,17 @@ class sendNotifications implements ShouldQueue
         $prodect = $Clothes->title_ar ?? "";
         for ($r = 1; $r < $c; $r++) {
             $take = 1000;
-            $device_token = AppUser::where('device_token', '!=', '')->skip($skip)
+            $device_token = AppUser::where('device_token', '!=', '')
+                ->where('device_token', '!=', 'logout')
+                ->whereNotNull('device_token')
+                ->skip($skip)
                 ->take($take)->pluck('device_token')->toArray();
             $skip += $take;
-            $dataa = [
-                "registration_ids" => $device_token,
-            "notification" => [
-                "title" => $title,
-                "body" => $catigore . ' ' . $prodect .' ' . $body,
-                "url" => $url,
-            ]
-            ];
-            $dataString = json_encode($dataa);
-            $headers = [
-                'Authorization:key=AAAAyNv4XM4:APA91bG2LLYhnWhlCeyruuWk2JANSzG2O8h1NpqD2zDv68Da5zTgQfc4UgPjdwEbK_JDOdkbf8uFpgWtnWHyzjq484P4_2ntc0vaqqLa_Hegu2Lhlxz6JQZCM2pU-nTFBy6WdLPDcAug',
-                'Content-Type: application/json',
-            ];
-
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);
-            $response = curl_exec($ch);
+            Fcm::send($device_token, $title, $catigore . ' ' . $prodect .' ' . $body, [
+                'url' => $url,
+                'cat_id' => $cat_id,
+                'ads_id' => $pro_id,
+            ]);
         }
 //        $data = [
 //            "registration_ids" => ['fmLy_hMrQie9gF8LERez8r:APA91bGIKYp1rknxSLNHJS3KELkKPjxbSA3I024n07tYpIj6OFpeFpZl7QbzcwjN6BU_LlYIBBObSMvx8dB32LUFUsqikpgi1sokBDgLdIsow2Ro-goJQ_IwEFkMH5Ca2yTPCKR2AcZI'],

@@ -10,6 +10,7 @@ use App\Models\Clothes;
 use App\Models\Message;
 use App\Models\Notification;
 use App\Models\Notifications;
+use App\Support\Fcm;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -50,21 +51,27 @@ class NotifyController extends Controller
 
             $cat=Categories::where('id',$request->cat_id)->first();
 
-            $skip = 0;
-            $take = 0;
-
-            $count = AppUser::count();
-            //type_account
-
             if ($request->type_account == 1){
-                $device_token = AppUser::where('device_token', '!=', '')->where('type', 1)->pluck('device_token')->toArray();
+                $device_token = AppUser::where('device_token', '!=', '')
+                    ->where('device_token', '!=', 'logout')
+                    ->whereNotNull('device_token')
+                    ->where('type', 1)->pluck('device_token')->toArray();
             }elseif ($request->type_account == 2) {
-                $device_token = AppUser::where('device_token', '!=', '')->where('type', 2)->pluck('device_token')->toArray();
+                $device_token = AppUser::where('device_token', '!=', '')
+                    ->where('device_token', '!=', 'logout')
+                    ->whereNotNull('device_token')
+                    ->where('type', 2)->pluck('device_token')->toArray();
             }else{
-                $device_token = AppUser::where('device_token', '!=', '')->pluck('device_token')->toArray();
+                $device_token = AppUser::where('device_token', '!=', '')
+                    ->where('device_token', '!=', 'logout')
+                    ->whereNotNull('device_token')
+                    ->pluck('device_token')->toArray();
             }
-            $this->notification($device_token, $request->title ?? null, $request->body ?? null,$Notifications->id, $request->url ?? null, $request->cat_id ?? null, $request->pro_id ?? null, $request->profile_id ?? null , $cat? $cat->title_ar : null , $cat->title_ar ?? null , $skip , $take , $count);
+            $result = $this->notification($device_token, $request->title ?? null, $request->body ?? null,$Notifications->id, $request->url ?? null, $request->cat_id ?? null, $request->pro_id ?? null, $request->profile_id ?? null , $cat? $cat->title_ar : null);
 
+            if (empty($result['success'])) {
+                return redirect()->back()->with('warning', trans('notification.error'));
+            }
 
             return redirect()->back()->with('success', trans('notification.success'));
         }
@@ -87,18 +94,24 @@ class NotifyController extends Controller
 
             $cat=Categories::where('id',$request->cat_id)->first();
 
-            $device_token = AppUser::whereIn('id', $ids)->pluck('device_token')->toArray();
+            $device_token = AppUser::whereIn('id', $ids)
+                ->whereNotNull('device_token')
+                ->where('device_token', '!=', '')
+                ->where('device_token', '!=', 'logout')
+                ->pluck('device_token')
+                ->toArray();
 
+            if (!$device_token) {
+                return redirect()->back()->with('warning', trans('notification.no_token'));
+            }
 
-            if ($device_token) {
-                $this->notification($device_token, $request->title ?? "", $request->body ?? "",$Notification->id, $request->url ?? null, $request->cat_id ?? null, $request->pro_id ?? null, $request->profile_id ?? null,$cat? $cat->title_ar : null );
+            $result = $this->notification($device_token, $request->title ?? "", $request->body ?? "",$Notification->id, $request->url ?? null, $request->cat_id ?? null, $request->pro_id ?? null, $request->profile_id ?? null,$cat? $cat->title_ar : null);
 
-
-
-                return redirect()->back()->with('success', trans('notification.success'));
-            } else {
+            if (empty($result['success'])) {
                 return redirect()->back()->with('warning', trans('notification.error'));
             }
+
+            return redirect()->back()->with('success', trans('notification.success'));
         } else {
             return redirect()->back()->with('success', trans('notification.error'));
 
@@ -241,50 +254,13 @@ class NotifyController extends Controller
 
     public function notification($FcmToken = [], $title = "", $body = "",$id="", $url = "", $cat_id = "", $ads_id = "", $profile_id= "",$cat_title = "")
     {
-        $data = [
-            "registration_ids" => $FcmToken,
-            "notification" => [
-                "id" => $id,
-                "title" => $title,
-                "body" => $body,
-                "url" => $url,
-                "cat_id" => $cat_id,
-                "ads_id" => $ads_id,
-                "profile_id" => $profile_id,
-                "cat_title" => $cat_title,
-                "sound" => "default"
-            ],
-            "data" => [
-                "id" => $id,
-                "title" => $title,
-                "body" => $body,
-                "url" => $url,
-                "cat_id" => $cat_id,
-                "ads_id" => $ads_id,
-                "profile_id" => $profile_id,
-                "cat_title" => $cat_title,
-                "sound" => "default"
-            ]
-
-        ];
-        $dataString = json_encode($data);
-        $headers = [
-            'Authorization: key=' . env('FCM_SERVER_KEY'),
-            'Content-Type: application/json',
-        ];
-
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);
-        $response = curl_exec($ch);
-//            return response()
-//            ->json(['status' => 'success', 'errors' => 0,
-//            'data' => json_decode($response, true)])
-//            ->header('Content-type', 'application/json');
+        return Fcm::send($FcmToken, $title, $body, [
+            'id' => $id,
+            'url' => $url,
+            'cat_id' => $cat_id,
+            'ads_id' => $ads_id,
+            'profile_id' => $profile_id,
+            'cat_title' => $cat_title,
+        ]);
     }
 }

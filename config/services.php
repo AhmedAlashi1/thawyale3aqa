@@ -40,4 +40,8 @@ return [
         'client_secret' => env('APPLE_CLIENT_SECRET'),
         'redirect' => env('APPLE_REDIRECT_URI')
     ],
+
+    'fcm' => [
+        'key' => env('FCM_SERVER_KEY'),
+    ],
 ];

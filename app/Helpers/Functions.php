@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\Notifications;
 use App\Models\Setting;
+use App\Support\Fcm as FcmClient;
 use Carbon\Carbon;
 use GuzzleHttp\Exception\ConnectException;
 use Kreait\Firebase\Factory;
@@ -361,6 +362,7 @@ trait Functions
             }
 
             $this->sendActivationFirebase($token, $activation_code, $message);
+
             return 'firebase';
         } catch (\Throwable $e) {
             \Log::error('Activation code send failed', [
@@ -375,70 +377,11 @@ trait Functions
     {
         $title = 'كود التفعيل';
         $body = $message ?: ('كود التفعيل الخاص بك هو ' . $code);
-        $tokens = is_array($deviceToken) ? array_values($deviceToken) : [$deviceToken];
-        $tokens = array_values(array_filter($tokens, function ($token) {
-            return !empty($token) && $token !== 'logout';
-        }));
 
-        if (!$tokens) {
-            return false;
-        }
-
-        $payload = [
-            'registration_ids' => $tokens,
-            'priority' => 'high',
-            'content_available' => true,
-            'notification' => [
-                'title' => $title,
-                'body' => $body,
-                'sound' => 'default',
-            ],
-            'data' => [
-                'type' => 'activation_code',
-                'activation_code' => (string) $code,
-                'title' => $title,
-                'body' => $body,
-                'sound' => 'default',
-            ],
-        ];
-
-        $keys = array_values(array_unique(array_filter([
-            env('FCM_SERVER_KEY'),
-            'AAAAyNv4XM4:APA91bG2LLYhnWhlCeyruuWk2JANSzG2O8h1NpqD2zDv68Da5zTgQfc4UgPjdwEbK_JDOdkbf8uFpgWtnWHyzjq484P4_2ntc0vaqqLa_Hegu2Lhlxz6JQZCM2pU-nTFBy6WdLPDcAug',
-        ])));
-
-        $lastResponse = null;
-        foreach ($keys as $serverKey) {
-            $headers = [
-                'Authorization: key=' . $serverKey,
-                'Content-Type: application/json',
-            ];
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-            $response = curl_exec($ch);
-            $error = curl_error($ch);
-            curl_close($ch);
-
-            $lastResponse = $response;
-            if ($error) {
-                \Log::error('Activation FCM curl error', ['error' => $error]);
-                continue;
-            }
-
-            $decoded = json_decode($response, true);
-            \Log::info('Activation FCM sent', ['response' => $response]);
-            if (!empty($decoded['success'])) {
-                return $response;
-            }
-        }
-
-        return $lastResponse;
+        return FcmClient::send($deviceToken, $title, $body, [
+            'type' => 'activation_code',
+            'activation_code' => (string) $code,
+        ]);
     }
 
 }
