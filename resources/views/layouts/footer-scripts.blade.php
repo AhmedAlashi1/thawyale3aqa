@@ -56,7 +56,8 @@
         });
     }
     {{-- var audio = new Audio("https://img.pikbest.com/houzi/audio/original/2020/10/16/93df8dfc1500e6f11905b609eb07c236.mp3");--}}
-     var audio = new Audio("https://admin.halaw-kakaw.com/assets/voice/rna.mp3");
+     @auth
+    var audio = new Audio("https://admin.halaw-kakaw.com/assets/voice/rna.mp3");
      {{--var audio = new Audio({{url('http://admin.halaw-kakaw.com/assets/voice/rna.mp3')}});--}}
     var pusher = new Pusher('{{env('PUSHER_KEY')}}', {
         cluster: 'mt1'
@@ -77,26 +78,10 @@
         toastr.options.timeOut = 5000;
         toastr.options.closeButton = true;
         toastr.options.positionClass = "toast-top-left";
-    // toastr.options.onclick = function () {
-    //     var ids = [];
-    //     ids.push({{$cart->id}});
-    //     var my_data = {};
-    //     my_data.ids = ids;
-    //     $.post('https://halaw-kakaw.com/admin/orders/activateAll2', my_data, function (data) {
-    //         if (data.status == true) {
-    //             window.open('https://halaw-kakaw.com/admin/orders/print/16951', "popupWindow", "width=600,height=600,scrollbars=yes");
-    //             try {
-    //                 dataTable.ajax.reload(null, false);
-    //             } catch (e) {
-
-    //             }
-    //         }
-
-    //     }, 'json');
-    // }
     toastr.success(' الطلب رقم  # {{ $cart->id }} يحتاج الى الموافقه');
     $('.toast').css('background-color' , 'black');
     @endforeach
+    @endauth
 </script>
 @yield('js')
 
