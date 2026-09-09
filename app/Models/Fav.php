@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Fav extends Model
 {
     protected $table = 'fav';
-        protected $fillable = ['charity_id','user_id'];
+        protected $fillable = ['charity_id','user_id','advertiser_id'];
     protected $dates = ['created_at','updated_at'];
 
     /**
@@ -16,11 +16,14 @@ class Fav extends Model
      */
     public function charity()
     {
-        return $this->belongsTo('\App\Models\Clothes');
+        return $this->belongsTo('\App\Models\Advertisements');
     }
 
     public function user()
     {
+        return $this->belongsTo('\App\Models\AppUser');
+    }
+    public function advertiser(){
         return $this->belongsTo('\App\Models\AppUser');
     }
 }

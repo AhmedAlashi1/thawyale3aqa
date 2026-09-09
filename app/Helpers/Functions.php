@@ -85,6 +85,12 @@ trait Functions
             'invalid_credentials' => -4,
             'could_not_create_token' => -5,
             'user_not_found' => -6,
+            'error' => 400,
+            'follow_exists' => -7,
+            'cat_not_found' => -8,
+            'package_order' => -9,
+            'mobile_exist' => -10,
+            'number_not_registered'=>-8,
         ];
         if ($status) {
             return $array[$status];
@@ -148,6 +154,9 @@ trait Functions
         if ($data) {
             $outData['data'] = $data;
         }
+//        else{
+//            $outData['data'] = [];
+//        }
         return response()->json($outData, $responseStatus);
     }
 
@@ -301,6 +310,7 @@ trait Functions
     public function createThumb($destinationPath, $fileName)
     {
         foreach ($this->thumeSize() as $key => $val) {
+//            Image::make($destinationPath . '/' . $fileName)->resize($val['width'], $val['height'])->save($destinationPath  . '/' . $fileName);
             Image::make($destinationPath . '/' . $fileName)->resize($val['width'], $val['height'])->save($destinationPath . '/' . $key . '/' . $fileName);
         }
 
@@ -312,7 +322,8 @@ trait Functions
     public function thumeSize()
     {
         $size = [
-            'thumb' => ['width' => 195, 'height' => 197]
+            //            'thumb' => ['width' => 195, 'height' => 197]
+            'thumb' => ['width' => 312, 'height' => 250]
         ];
         return $size;
     }

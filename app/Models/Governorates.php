@@ -11,7 +11,7 @@ class Governorates extends Model
 
     protected $table = "governorates";
 
-    protected $fillable = ['title_en' , 'title_ar' , 'status'];
+    protected $fillable = ['title_en' , 'title_ar' , 'country_id' , 'status'];
 
     public function app_users()
     {
@@ -21,6 +21,10 @@ class Governorates extends Model
     public function cities()
     {
         return $this->hasMany(Cities::class , 'governorat_id' , 'id');
+    }
+    public function country()
+    {
+        return $this->belongsTo(Country::class , 'country_id' , 'id');
     }
 
 }

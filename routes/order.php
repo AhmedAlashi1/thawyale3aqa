@@ -35,5 +35,10 @@ Route::group(
         // Route::post('category/update/{id}' , 'update')->name('category.update');
 
         Route::delete('orders/delete/{id}' , 'delete')->name('orders.delete');
+
+        Route::get('orders/appUser', 'export')->name('orders.export');
+
+        Route::get('DownloadOrderPDF/{id}', 'DownloadOrderPDF')->name('DownloadOrderPDF');
+
     });
 });

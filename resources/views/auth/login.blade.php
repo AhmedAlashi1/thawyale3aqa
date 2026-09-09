@@ -1,155 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.master2')
+@section('css')
+    <!-- Sidemenu-respoansive-tabs css -->
 
-<head>
-    <title>Login</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link rel="icon" type="image/png"
-        href="https://colorlib.com/etc/lf/Login_v4/images/icons/favicon.icoimages/icons/favicon.ico" />
-
-    <link rel="stylesheet" type="text/css"
-        href="https://colorlib.com/etc/lf/Login_v4/vendor/bootstrap/css/bootstrap.min.css ">
-
-    <link rel="stylesheet" type="text/css"
-        href="https://colorlib.com/etc/lf/Login_v4/fonts/font-awesome-4.7.0/css/font-awesome.min.css ">
-
-    <link rel="stylesheet" type="text/css"
-        href="https://colorlib.com/etc/lf/Login_v4/fonts/iconic/css/material-design-iconic-font.min.css">
-
-    <link rel="stylesheet" type="text/css" href="https://colorlib.com/etc/lf/Login_v4/vendor/animate/animate.css">
-
-    <link rel="stylesheet" type="text/css"
-        href="https://colorlib.com/etc/lf/Login_v4/vendor/css-hamburgers/hamburgers.min.css">
-
-    <link rel="stylesheet" type="text/css"
-        href="https://colorlib.com/etc/lf/Login_v4/vendor/animsition/css/animsition.min.css">
-
-    <link rel="stylesheet" type="text/css" href="https://colorlib.com/etc/lf/Login_v4/vendor/select2/select2.min.css ">
-
-    <link rel="stylesheet" type="text/css"
-        href="https://colorlib.com/etc/lf/Login_v4/vendor/daterangepicker/daterangepicker.css">
-
-    <link rel="stylesheet" type="text/css" href="https://colorlib.com/etc/lf/Login_v4/css/util.css">
-    <link rel="stylesheet" type="text/css" href="https://colorlib.com/etc/lf/Login_v4/css/main.css">
-
-    <meta name="robots" content="noindex, follow">
-    <script>
-    (function(w, d) {
-        ! function(a, e, t, r, z) {
-            a.zarazData = a.zarazData || {}, a.zarazData.executed = [], a.zarazData.tracks = [], a.zaraz = {
-                deferred: []
-            };
-            var s = e.getElementsByTagName("title")[0];
-            a.zarazData.c = e.cookie, s && (a.zarazData.t = e.getElementsByTagName("title")[0].text), a.zarazData
-                .w = a.screen.width, a.zarazData.h = a.screen.height, a.zarazData.j = a.innerHeight, a.zarazData.e =
-                a.innerWidth, a.zarazData.l = a.location.href, a.zarazData.r = e.referrer, a.zarazData.k = a.screen
-                .colorDepth, a.zarazData.n = e.characterSet, a.zarazData.o = (new Date).getTimezoneOffset(), //
-                a.dataLayer = a.dataLayer || [], a.zaraz.track = (e, t) => {
-                    for (key in a.zarazData.tracks.push(e), t) a.zarazData["z_" + key] = t[key]
-                }, a.zaraz._preSet = [], a.zaraz.set = (e, t, r) => {
-                    a.zarazData["z_" + e] = t, a.zaraz._preSet.push([e, t, r])
-                }, a.dataLayer.push({
-                    "zaraz.start": (new Date).getTime()
-                }), a.addEventListener("DOMContentLoaded", (() => {
-                    var t = e.getElementsByTagName(r)[0],
-                        z = e.createElement(r);
-                    z.defer = !0, z.src = "/cdn-cgi/zaraz/s.js?z=" + btoa(encodeURIComponent(JSON.stringify(
-                        a.zarazData))), t.parentNode.insertBefore(z, t)
-                }))
-        }(w, d, 0, "script");
-    })(window, document);
-    </script>
-</head>
-
-<body>
-    <div class="limiter">
-        <div class="container-login100"
-            style="background-image: url(https://colorlib.com/etc/lf/Login_v4/images/bg-01.jpg);">
-            <div class="wrap-login100 p-l-55 p-r-55 p-t-65 p-b-54">
-                <form method="post" action="{{ route('login') }}" class="login100-form validate-form">
-                    @csrf
-                    <span class="login100-form-title p-b-49">
-                        Login
-                    </span>
-                    @if($errors->any())
-                    <div class="alert alert-danger">
-                        @foreach($errors->all() as $message)
-                        <li>{{ $message }}</li>
-                        @endforeach
+    <meta name="google-site-verification" content="3NBcpCp3OVUcAqacgacSjpLUjT8ismTBaTpAu3dhL84" />
+    <link href="{{URL::asset('assets/plugins/sidemenu-responsive-tabs/css/sidemenu-responsive-tabs.css')}}" rel="stylesheet">
+    <meta name="google-site-verification" content="hLUDZA5aMfDFO8XrkactuLN9u96wDFEy9FjxEaKSJtE" />
+@endsection
+@section('content')
+    <div class="container-fluid">
+        <div class="row no-gutter">
+            <!-- The image half -->
+            <div class="col-md-6 col-lg-6 col-xl-7 d-none d-md-flex bg-primary-transparent">
+                <div class="row wd-100p mx-auto text-center">
+                    <div class="col-md-12 col-lg-12 col-xl-12 my-auto mx-auto wd-100p">
+                        <img src="{{URL::asset('assets/login.png')}}" class="my-auto ht-xl-80p wd-md-100p wd-xl-80p mx-auto" alt="logo">
                     </div>
-                    @endif
-                    <div class="wrap-input100 validate-input m-b-23" data-validate="Email is reauired">
-                        <span class="label-input100">Email</span>
-                        <input type="email" name="email" class="input100 " placeholder="Type your Email">
+                </div>
+            </div>
+            <!-- The content half -->
+            <div class="col-md-6 col-lg-6 col-xl-5 bg-white">
+                <div class="login d-flex align-items-center py-2">
+                    <!-- Demo content-->
+                    <div class="container p-0">
+                        <div class="row">
+                            <div class="col-md-10 col-lg-10 col-xl-9 mx-auto">
+                                <div class="card-sigin">
+                                    <div class="mb-5 d-flex"> <a href="https://raiyansoft.com/"><img src="{{URL::asset('assets/img/media/logo-light.png')}}" class="sign-favicon ht-40" alt="logo">
+                                        </a> </div>
+                                    <div class="card-sigin">
+                                        <div class="main-signup-header">
+                                            <h2>مرحبًا بعودتك!</h2>
+                                            <h5 class="font-weight-semibold mb-4">من فضلك سجل دخولك للمتابعة.</h5>
+                                            <form method="post" action="{{ url('/login') }}" class="login100-form validate-form">
+                                                @csrf
+                                                <div class="form-group">
+                                                    <label>Email</label>
+                                                    <input type="email"
+                                                           name="email"
+                                                           value="{{ old('email') }}"
 
-                        <span class="focus-input100" data-symbol="&#xf206;"></span>
-                    </div>
-                    <div class="wrap-input100 validate-input" data-validate="Password is required">
-                        <span class="label-input100">Password</span>
-                        <input type="password" name="password" placeholder="Type your password"
-                            class="input100  input100">
-
-                        <span class="focus-input100" data-symbol="&#xf190;"></span>
-                    </div>
-                    <div class="text-right p-t-8 p-b-31">
-
-                    </div>
-                    <div class="container-login100-form-btn">
-                        <div class="wrap-login100-form-btn">
-                            <div class="login100-form-bgbtn"></div>
-                            <button class="login100-form-btn">
-                                Login
-                            </button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-8">
-                            <div class="icheck-primary">
-                                <input type="checkbox" id="remember">
-                                <label for="remember">Remember Me</label>
+                                                           class="form-control @error('email') is-invalid @enderror" placeholder="Type your Email" >
+                                                    {{--                                                        <input class="form-control" placeholder="Enter your email" type="text">--}}
+                                                </div>
+                                                @error('email')
+                                                <span class="error ">{{ $message }}</span>
+                                                @enderror
+                                                <div class="form-group">
+                                                    <label>Password</label>
+                                                    {{--                                                        <input class="form-control" placeholder="Enter your password" type="password">--}}
+                                                    <input type="password"
+                                                           name="password"
+                                                           placeholder="Type your password"
+                                                           class="form-control @error('password') is-invalid @enderror input100">
+                                                </div>
+                                                @error('password')
+                                                <span class="error">{{ $message }}</span>
+                                                @enderror
+                                                <button class="btn btn-main-primary btn-block">Sign In</button>
+                                                {{--													<div class="row row-xs">--}}
+                                                {{--														<div class="col-sm-6">--}}
+                                                {{--															<button class="btn btn-block"><i class="fab fa-facebook-f"></i> Signup with Facebook</button>--}}
+                                                {{--														</div>--}}
+                                                {{--														<div class="col-sm-6 mg-t-10 mg-sm-t-0">--}}
+                                                {{--															<button class="btn btn-info btn-block"><i class="fab fa-twitter"></i> Signup with Twitter</button>--}}
+                                                {{--														</div>--}}
+                                                {{--													</div>--}}
+                                            </form>
+                                            {{--												<div class="main-signin-footer mt-5">--}}
+                                            {{--													<p><a href="">Forgot password?</a></p>--}}
+                                            {{--													<p>Don't have an account? <a href="{{ url('/' . $page='signup') }}">Create an Account</a></p>--}}
+                                            {{--												</div>--}}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
-            </div>
+                    </div><!-- End -->
+                </div>
+            </div><!-- End -->
         </div>
     </div>
-    <div id="dropDownSelect1"></div>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/jquery/jquery-3.2.1.min.js"></script>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/animsition/js/animsition.min.js"></script>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/bootstrap/js/popper.js"></script>
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/bootstrap/js/bootstrap.min.js"></script>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/select2/select2.min.js"></script>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/daterangepicker/moment.min.js"></script>
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/daterangepicker/daterangepicker.js"></script>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/vendor/countdowntime/countdowntime.js"></script>
-
-    <script src="https://colorlib.com/etc/lf/Login_v4/js/main.js"></script>
-
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-23581568-13"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-
-    gtag('config', 'UA-23581568-13');
-    </script>
-    <script defer
-        src="https://static.cloudflareinsights.com/beacon.min.js/v652eace1692a40cfa3763df669d7439c1639079717194"
-        integrity="sha512-Gi7xpJR8tSkrpF7aordPZQlW2DLtzUlZcumS8dMQjwDHEnw9I7ZLyiOj/6tZStRBGtGgN6ceN6cMH8z7etPGlw=="
-        data-cf-beacon='{"rayId":"6d1bb88c74085c5c","version":"2021.12.0","icTag":["sxg_enabled"],"token":"cd0b4b3a733644fc843ef0b185f98241","si":100}'
-        crossorigin="anonymous"></script>
-</body>
-
-</html>
+@endsection
+@section('js')
+@endsection

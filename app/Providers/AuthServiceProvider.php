@@ -27,7 +27,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // master user Big Admin
         Gate::before(function ($user , $permissions){
-            if($user->id == 19){
+            if($user->id == 1){
                 return true;
             }
         });

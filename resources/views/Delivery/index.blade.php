@@ -31,7 +31,25 @@
 @endsection
 
 @section('content')
+    <div class="main-body">
 <div id="error_message"></div>
+        <div class="modal" id="modaldemo8" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">{{ trans('admins.dele') }}</h6><button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ trans('admins.aresure') }}</p><br>
+                        <input class="form-control" name="usernamed" id="usernamed" type="text" readonly="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('admins.close') }}</button>
+                        <button type="submit" class="btn btn-danger" id="dletet">{{ trans('admins.save') }}</button>
+                    </div>
+                </div>
+            </div>
+</div>
 <div class="modal" id="modalAdddelivery">
     <div class="modal-dialog" role="document">
         <div class="modal-content modal-content-demo">
@@ -144,6 +162,7 @@
                         </thead>
                         <tbody>
                         </tbody>
+                     
                     </table>
                     @endcan
                 </div>
@@ -153,6 +172,7 @@
         </div>
     </div>
 </div>
+ </div>
 @endsection
 @section('js')
 <script src="{{ URL::asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
@@ -181,6 +201,10 @@ var local = "{{ App::getLocale() }}";
 var table = $('#get_deliveries').DataTable({
     // processing: true,
     ajax: '{!! route("get_delivery") !!}',
+    lengthMenu: [
+        [10, 50 , 200 , 500 , 1000 ,  -1],
+        [10, 50 , 200 , 500 , 1000],
+    ],
     columns: [{
             'data': 'id',
             'className': 'text-center text-lg text-medium'
@@ -223,7 +247,7 @@ var table = $('#get_deliveries').DataTable({
                 <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditdelivery" data-id="${data.id}"><i class="las la-pen"></i></button>
                 @endcan
                 @can('paymentMethod-delete')
-                <button class="modal-effect btn btn-sm btn-danger" id="Deletedelivery" data-id="${data.id}"><i class="las la-trash"></i></button>
+                <button class="modal-effect btn btn-sm btn-danger" id="Deletedelivery" data-id="${data.id}" @if(\Illuminate\Support\Facades\App::getLocale() == 'en')data-namee="${ data.title_en}"@else data-namee="${data.title_ar}"@endif><i class="las la-trash"></i></button>
                 @endcan
                 `;
             },
@@ -337,28 +361,62 @@ $(document).on('click', '#EditClient', function(e) {
         }
     });
 });
+
+{{--$(document).on('click', '#Deletedelivery', function(e) {--}}
+{{--    e.preventDefault();--}}
+{{--    var id_delivery = $(this).data('id');--}}
+{{--    $.ajaxSetup({--}}
+{{--        headers: {--}}
+{{--            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+{{--        }--}}
+{{--    });--}}
+{{--    $.ajax({--}}
+{{--        type: 'DELETE',--}}
+{{--        url: '{{ url("admin/delivery/delete") }}/' + id_delivery,--}}
+{{--        data: '',--}}
+{{--        contentType: false,--}}
+{{--        processData: false,--}}
+{{--        success: function(response) {--}}
+{{--            $('#error_message').html("");--}}
+{{--            $('#error_message').addClass("alert alert-danger");--}}
+{{--            $('#error_message').text(response.message);--}}
+{{--            table.ajax.reload();--}}
+{{--        }--}}
+{{--    });--}}
+{{--});--}}
+
 $(document).on('click', '#Deletedelivery', function(e) {
     e.preventDefault();
-    var id_delivery = $(this).data('id');
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $.ajax({
-        type: 'DELETE',
-        url: '{{ url("admin/delivery/delete") }}/' + id_delivery,
-        data: '',
-        contentType: false,
-        processData: false,
-        success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
-            table.ajax.reload();
-        }
-    });
+    $('#usernamed').val($(this).data('namee'));
+    var id_admin = $(this).data('id');
+    $('#modaldemo8').modal('show');
+    aaaa(id_admin);
 });
+function aaaa(id) {
+    $(document).off("click", "#dletet").on("click", "#dletet", function (e) {
+        e.preventDefault();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            type: 'DELETE',
+            url: '{{ url("admin/delivery/delete") }}/' + id,
+            data: '',
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $('#error_message').html("");
+                $('#error_message').addClass("alert alert-danger");
+                $('#error_message').text(response.message);
+                $('#modaldemo8').modal('hide');
+                table.ajax.reload();
+            }
+        });
+    });
+}
+
 $(document).on('click', '#status', function(e) {
     e.preventDefault();
     // console.log("Alliiiii");

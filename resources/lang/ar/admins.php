@@ -9,6 +9,7 @@ return [
     'user_name' => 'أسم المستخدم ',
     'phone' => 'رقم الهاتف',
     'is_active' => 'الحالة',
+    'permission' => 'الصلاحية',
     'disactivated' => 'غير مفعل',
     'activated' => 'مفعل',
     'activate_selected' => 'تفعيل المحدد',
@@ -18,9 +19,12 @@ return [
     'password' => 'كلمة المرور',
     'repassword' => 'تأكيد كلمة المرور',
     'content_search' => 'بحث متقدم فى المدراء',
-    'Add_User' => 'إضافة مدير',
+    'Add_User' => 'إضافة عضو',
     'Processes' => 'العمليات',
-
+    'dele' => 'إدارة الأحداث',
+    'aresure' => 'هل أنت متأكد من عملية الحذف؟',
+    'close' => 'أغلق',
+    'save' => 'حذف',
     'js_lang' => [
         'user_must_be_unique' => 'حقل البريد الالكترونى او اسم المستخدم موجود من قبل',
         'success_add_user' => 'تم اضافة مدير بنجاح',

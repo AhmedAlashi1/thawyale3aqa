@@ -91,6 +91,7 @@ class CouponsController extends Controller
     public function update (Request $request , $id){
         $validator = Validator::make($request->all(), Coupons::$rules);
         $coupon = Coupons::find($id);
+        return $request->all();
         if ($validator->fails()) {
             return response()->json([
                 'status' => 400,

@@ -46,4 +46,6 @@ return [
     'promo_user_exist' => 'promo user exists',
     'product_not_available' => 'product not available',
 
+    'mobile_exist' => 'The number is already in use',
+
 ];

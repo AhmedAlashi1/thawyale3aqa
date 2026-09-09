@@ -1,165 +1,201 @@
 @extends('layouts.master')
 @section('css')
 
-@section('title')
-المستخدمين
-@stop
+    @section('title')
+        المستخدمين
+    @stop
 
-<!-- Internal Data table css -->
+    <!-- Internal Data table css -->
 
-<link href="{{ URL::asset('assets/plugins/datatable/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />
-<link href="{{ URL::asset('assets/plugins/datatable/css/buttons.bootstrap4.min.css') }}" rel="stylesheet">
-<link href="{{ URL::asset('assets/plugins/datatable/css/responsive.bootstrap4.min.css') }}" rel="stylesheet" />
-<link href="{{ URL::asset('assets/plugins/datatable/css/jquery.dataTables.min.css') }}" rel="stylesheet">
-<link href="{{ URL::asset('assets/plugins/datatable/css/responsive.dataTables.min.css') }}" rel="stylesheet">
-<!--Internal   Notify -->
-<link href="{{ URL::asset('assets/plugins/notify/css/notifIt.css') }}" rel="stylesheet" />
+    <link href="{{ URL::asset('assets/plugins/datatable/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />
+    <link href="{{ URL::asset('assets/plugins/datatable/css/buttons.bootstrap4.min.css') }}" rel="stylesheet">
+    <link href="{{ URL::asset('assets/plugins/datatable/css/responsive.bootstrap4.min.css') }}" rel="stylesheet" />
+    <link href="{{ URL::asset('assets/plugins/datatable/css/jquery.dataTables.min.css') }}" rel="stylesheet">
+    <link href="{{ URL::asset('assets/plugins/datatable/css/responsive.dataTables.min.css') }}" rel="stylesheet">
+    <!--Internal   Notify -->
+    <link href="{{ URL::asset('assets/plugins/notify/css/notifIt.css') }}" rel="stylesheet" />
 
 @endsection
 @section('page-header')
-<!-- breadcrumb -->
-<div class="breadcrumb-header justify-content-between">
-    <div class="my-auto">
-        <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Home</h4><span class="text-muted mt-1 tx-13 mr-2 mb-0"> /
-                cities</span>
-        </div>
+    <!-- breadcrumb -->
+    <div class="breadcrumb-header justify-content-between">
+        <div class="my-auto">
+            <div class="d-flex">
+                <h4 class="content-title mb-0 my-auto">{{ trans('admins.home') }}</h4><span class="text-muted mt-1 tx-13 mr-2 mb-0"> /
+            {{ trans('country.content_title') }}</span>
+            </div>
 
+        </div>
     </div>
-</div>
-<!-- breadcrumb -->
+    <!-- breadcrumb -->
 @endsection
 
 @section('content')
-<div id="error_message"></div>
-<div class="modal" id="modalAddcity">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content modal-content-demo">
-            <div class="modal-header">
-                <h6 class="modal-title">cities</h6><button aria-label="Close" class="close" data-dismiss="modal"
-                    type="button"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <form id="formcity" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Einglish :</label>
-                            <input type="text" class="form-control" name="title_en" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Arabic :</label>
-                            <input type="text" class="form-control" name="title_ar" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Einglish :</label>
-                            <input type="number" class="form-control" name="delivery_cost" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Arabic :</label>
-                            <input type="number" class="form-control" name="order_limit" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label class="form-label"> Prodect Status :</label>
-                            <select name="governorat_id" class="form-control">
-                                @foreach($Gov as $c)
-                                <option value="{{ $c->id }}">{{ $c->title_en }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+    <div class="main-body">
+        <div id="error_message"></div>
+        <div class="modal" id="modaldemo8" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">{{ trans('admins.dele') }}</h6><button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ trans('admins.aresure') }}</p><br>
+                        <input class="form-control" name="usernamed" id="usernamed" type="text" readonly="">
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success Addcity" id="Addcity">Save</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End Basic modal -->
-<div class="modal" id="modalEditcity">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content modal-content-demo">
-            <div class="modal-header">
-                <h6 class="modal-title">cityes</h6><button aria-label="Close" class="close" data-dismiss="modal"
-                    type="button"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <form id="formeditadmin" enctype="multipart/form-data">
-                    <input type="hidden" class="form-control" id="id_city">
-                    <div class="row">
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Einglish :</label>
-                            <input type="text" class="form-control" name="title_en" id="title_en" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Arabic :</label>
-                            <input type="text" class="form-control" name="title_ar" id="title_ar" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Einglish :</label>
-                            <input type="number" class="form-control" name="delivery_cost" id="delivery_cost" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="exampleInputEmail1">city Title Arabic :</label>
-                            <input type="number" class="form-control" name="order_limit" id="order_limit" required>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label class="form-label"> Prodect Status : <span id="governora"></span></label>
-                            <select name="governorat_id" class="form-control">
-                                @foreach($Gov as $c)
-                                <option value="{{ $c->id }}">{{ $c->title_en }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success" id="EditClient">Save</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End Basic modal -->
-<!-- row -->
-<div class="row">
-    <div class="col-xl-12">
-        <div class="card mg-b-20">
-            <div class="card-header pb-0">
-                <div class="row row-xs wd-xl-80p">
-                    <div class="col-sm-6 col-md-3 mg-t-10">
-                        <button class="btn btn-info-gradient btn-block" id="ShowModalAddcity">
-                            <a href="#" style="font-weight: bold; color: beige;">Add city</a>
-                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('admins.close') }}</button>
+                        <button type="submit" class="btn btn-danger" id="dletet">{{ trans('admins.save') }}</button>
                     </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive hoverable-table">
-                    <table class="table table-hover" id="get_cities" style=" text-align: center;">
-                        <thead>
-                            <tr>
-                                <th class="border-bottom-0">#</th>
-                                <th class="border-bottom-0">Area Name</th>
-                                <th class="border-bottom-0">Delivery Cost</th>
-                                <th class="border-bottom-0">Minimum order</th>
-                                <th class="border-bottom-0">Added date</th>
-                                <th class="border-bottom-0">Status</th>
-                                <th class="border-bottom-0">Processes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+        </div>
+        <div class="modal" id="modalAddcity">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">{{ trans('country.content_title') }}</h6><button aria-label="Close" class="close" data-dismiss="modal"
+                                                                                                 type="button"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formcity" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.city_name') }} :</label>
+                                    <input type="text" class="form-control" name="title_en" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.name_ar') }} :</label>
+                                    <input type="text" class="form-control" name="title_ar" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.delivery_cost') }} :</label>
+                                    <input type="number" class="form-control" name="delivery_cost" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.order_limit') }} :</label>
+                                    <input type="number" class="form-control" name="order_limit" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label class="form-label"> {{ trans('country.Governorate') }} :</label>
+                                    <select name="governorat_id" class="form-control">
+                                        @foreach($Gov as $c)
+                                            @if(\Illuminate\Support\Facades\App::getLocale() == 'en')
+                                                <option value="{{ $c->id }}">{{ $c->title_en }}</option>
+                                            @else
+                                                <option value="{{ $c->id }}">{{ $c->title_ar }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success Addcity" id="Addcity">{{ trans('country.save') }}</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('country.close') }}</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
+        </div>
+        <!-- End Basic modal -->
+        <div class="modal" id="modalEditcity">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">cityes</h6><button aria-label="Close" class="close" data-dismiss="modal"
+                                                                   type="button"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formeditadmin" enctype="multipart/form-data">
+                            <input type="hidden" class="form-control" id="id_city">
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.city_name') }} :</label>
+                                    <input type="text" class="form-control" name="title_en" id="title_en" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.name_ar') }} :</label>
+                                    <input type="text" class="form-control" name="title_ar" id="title_ar" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.delivery_cost') }} :</label>
+                                    <input type="number" class="form-control" name="delivery_cost" id="delivery_cost" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="exampleInputEmail1">{{ trans('country.order_limit') }} :</label>
+                                    <input type="number" class="form-control" name="order_limit" id="order_limit" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label class="form-label"> {{ trans('country.Governorate') }} : <span id="governora"></span></label>
+                                    <select name="governorat_id" class="form-control">
+                                        @foreach($Gov as $c)
+                                            @if(\Illuminate\Support\Facades\App::getLocale() == 'en')
+                                                <option value="{{ $c->id }}">{{ $c->title_en }}</option>
+                                            @else
+                                                <option value="{{ $c->id }}">{{ $c->title_ar }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success" id="EditClient">{{ trans('country.save') }}</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('country.close') }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Basic modal -->
+        <!-- row -->
+        <div class="row">
 
+
+            <div class="col-xl-12">
+                <div class="card mg-b-20">
+                    <div class="card-header pb-0">
+                        @can('region-create')
+                        <div class="row row-xs wd-xl-80p">
+                            <div class="col-sm-6 col-md-3 mg-t-10">
+                                <button class="btn btn-info-gradient btn-block" id="ShowModalAddcity">
+                                    <a href="#" style="font-weight: bold; color: beige;">{{ trans('country.addCities') }}</a>
+                                </button>
+                            </div>
+                        </div>
+                        @endcan
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive hoverable-table">
+                            @can('region-view')
+                            <table class="table table-hover" id="get_cities" style=" text-align: center;">
+                                <thead>
+                                <tr>
+                                    <th class="border-bottom-0">#</th>
+                                    <th class="border-bottom-0">{{ trans('country.zon_name') }}</th>
+                                    <th class="border-bottom-0">{{ trans('country.delivery_cost') }}</th>
+                                    <th class="border-bottom-0">{{ trans('country.order_limit') }}</th>
+                                    <th class="border-bottom-0">{{ trans('country.created_at') }}</th>
+                                    <th class="border-bottom-0">{{ trans('app_users.status') }}</th>
+                                    <th class="border-bottom-0">
+                                        @canany([ 'region-update' , 'region-delete' ])
+                                            {{ trans('category.Processes') }}
+                                        @endcanany
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+
+                            </table>
+                            @endcan
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
 @endsection
 
 @section('js')
@@ -191,10 +227,17 @@ var id = "{{ request()->route('id') }}";
 // console.log(id);
 var table = $('#get_cities').DataTable({
     processing: true,
+    colReorder: true,
+    order: [],
+    pageLength: 0,
     ajax: {
         url: '{{ url("admin/city/show/") }}/' + id,
         cache: true
     },
+    lengthMenu: [
+        [10, 50 , 200 , 500 , 1000 ,  -1],
+        [10, 50 , 200 , 500 , 1000],
+    ],
     columns: [{
             'data': 'id',
             'className': 'text-center text-lg text-medium'
@@ -219,17 +262,22 @@ var table = $('#get_cities').DataTable({
             'className': 'text-center text-lg text-medium'
         },
         {
-            'data': 'created_at',
-            'className': 'text-center text-lg text-medium'
+            'data': null,
+            'className': 'text-center text-lg text-medium',
+            render: function (data , row , type){
+                var d = new Date(data.created_at);
+                var datestring = d.getDate()  + "-" + (d.getMonth()+1) + "-" + d.getFullYear() + " " +
+                    d.getHours() + ":" + d.getMinutes() ;
+                return datestring;
+            }
         },
         {
             'data': null,
             render: function(data, row, type) {
-                var phone;
                 if (data.status == '1') {
-                    return `<button class="btn btn-success-gradient btn-block" id="status" data-id="${data.id}" data-viewing_status="${data.status}">Active</button>`;
+                    return `<button class="btn btn-success-gradient btn-block" id="status" data-id="${data.id}" data-viewing_status="${data.status}">{{ trans('category.Active') }}</button>`;
                 } else {
-                    return `<button class="btn btn-danger-gradient btn-block" id="statusoff" data-id="${data.id}" data-viewing_status="${data.status}">Not Active</button>`;
+                    return `<button class="btn btn-danger-gradient btn-block" id="statusoff" data-id="${data.id}" data-viewing_status="${data.status}">{{ trans('category.iActive') }}</button>`;
                 }
             },
         },
@@ -237,8 +285,13 @@ var table = $('#get_cities').DataTable({
             'data': null,
             render: function(data, row, type) {
                 return `
+                @can('region-update')
                 <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditcity" data-id="${data.id}"><i class="las la-pen"></i></button>
-                        <button class="modal-effect btn btn-sm btn-danger" id="Deletecity" data-id="${data.id}"><i class="las la-trash"></i></button>`;
+                @endcan
+                @can('region-update')
+                <button class="modal-effect btn btn-sm btn-danger" id="Deletecity" data-id="${data.id}"  @if(\Illuminate\Support\Facades\App::getLocale() == 'en')data-namee="${ data.title_en}"@else data-namee="${data.title_ar}"@endif><i class="las la-trash"></i></button>
+                @endcan
+`;
             },
             orderable: false,
             searchable: false
@@ -351,28 +404,62 @@ $(document).on('click', '#EditClient', function(e) {
         }
     });
 });
+
+{{--$(document).on('click', '#Deletecity', function(e) {--}}
+{{--    e.preventDefault();--}}
+{{--    var id_city = $(this).data('id');--}}
+{{--    $.ajaxSetup({--}}
+{{--        headers: {--}}
+{{--            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+{{--        }--}}
+{{--    });--}}
+{{--    $.ajax({--}}
+{{--        type: 'DELETE',--}}
+{{--        url: '{{ url("admin/city/delete") }}/' + id_city,--}}
+{{--        data: '',--}}
+{{--        contentType: false,--}}
+{{--        processData: false,--}}
+{{--        success: function(response) {--}}
+{{--            $('#error_message').html("");--}}
+{{--            $('#error_message').addClass("alert alert-danger");--}}
+{{--            $('#error_message').text(response.message);--}}
+{{--            table.ajax.reload();--}}
+{{--        }--}}
+{{--    });--}}
+{{--});--}}
+
 $(document).on('click', '#Deletecity', function(e) {
     e.preventDefault();
-    var id_city = $(this).data('id');
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $.ajax({
-        type: 'DELETE',
-        url: '{{ url("admin/city/delete") }}/' + id_city,
-        data: '',
-        contentType: false,
-        processData: false,
-        success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
-            table.ajax.reload();
-        }
-    });
+    $('#usernamed').val($(this).data('namee'));
+    var id_admin = $(this).data('id');
+    $('#modaldemo8').modal('show');
+    aaaa(id_admin);
 });
+function aaaa(id) {
+    $(document).off("click", "#dletet").on("click", "#dletet", function (e) {
+        e.preventDefault();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            type: 'DELETE',
+            url: '{{ url("admin/city/delete") }}/' + id,
+            data: '',
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $('#error_message').html("");
+                $('#error_message').addClass("alert alert-danger");
+                $('#error_message').text(response.message);
+                $('#modaldemo8').modal('hide');
+                table.ajax.reload();
+            }
+        });
+    });
+}
+
 $(document).on('click', '#status', function(e) {
     e.preventDefault();
     // console.log("Alliiiii");
@@ -398,9 +485,7 @@ $(document).on('click', '#status', function(e) {
         url: '{{ route("city.status") }}',
         data: data,
         success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
+
             table.ajax.reload();
         }
     });
@@ -430,9 +515,7 @@ $(document).on('click', '#statusoff', function(e) {
         url: '{{ route("city.status") }}',
         data: data,
         success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
+
             table.ajax.reload();
         }
     });

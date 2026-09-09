@@ -3,22 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categories as Category;
+//use App\Models\Clothes as Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class CategoriesController extends Controller
 {
-    public function category (){
-        if(Gate::denies('categories-view')){
+    public function category()
+    {
+        if (Gate::denies('categories-view')) {
             abort(403);
         }
-        return view('Category.index');
+        $categories = Category::orderBy('sort_order')->where('parent_id', '0')->get();
+        return view('Category.index', compact('categories'));
     }
 
-    public function get_categories (){
-        $categories = Category::get();
+    public function get_categories()
+    {
+        $categories = Category::orderBy('sort_order')->where('parent_id', '0')->get();
         if ($categories) {
             return response()->json([
                 'message' => 'Data Found',
@@ -33,40 +38,97 @@ class CategoriesController extends Controller
         }
     }
 
-    public function add_category (Request $request){
-        $validator = Validator::make($request->all(), Category::$rules);
-        $data = $request->except('image');
-        if ($request->hasFile('image')){
-            $file = $request->file('image');
-            $filename = $file->getClientOriginalName();
-            $local =  request()->getSchemeAndHttpHost();
-            $path = $file->storeAs('category' , $filename ,  ['disk' => 'uploads']);
-            $data['image']  = $local .'/'.'uploads/'.$path;
+    public function update_sort_order(Request $request)
+    {
+        $Category = Category::all();
+
+
+        foreach ($request->order as $order) {
+            $c = Category::find($order['id']);
+            $c->sort_order = $order['position'];
+            $c->save();
+
         }
-        // $category = new Category();
-        // $category->title = $request->title;
-        // $category->description = $request->description;
-        // $category->image = $request->image;
-        // $category->status = $request->status;
-        // $category->save();
-        if ($validator->fails()) {
+
+        return response('Update Successfully.', 200);
+    }
+
+    public function show()
+    {
+        if (Gate::denies('categories-view')) {
+            abort(403);
+        }
+        return view('Category.show');
+    }
+
+    public function show_categories($id)
+    {
+        $categories = Category::where('parent_id', $id)->orderBy('sort_order')->get();
+        if ($categories) {
             return response()->json([
-                'status' => 400,
-                'errors' => $validator->messages(),
-            ]);
-        }else{
-        Category::create($data);
-            return response()->json([
-                'message' => trans('category.success_add_property'),
+                'message' => 'Data Found',
                 'status' => 200,
-                // 'data' => $category
+                'data' => $categories
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Data Not Found',
+                'status' => 404,
             ]);
         }
     }
 
+    public function add_category(Request $request)
+    {
+        $parent_id = $request->parent_id ?? '0';
+        if ($request->type == '2') {
+            $validator = Validator::make($request->all(), Category::$rules);
+            $data = $request->except('image');
+            if ($request->file('image')) {
+                $name = Str::random(12);
+                $path = $request->file('image');
+                $name = $name . time() . '.' . $request->file('image')->getClientOriginalExtension();
+                $data['image'] = $name;
+                $path->move('assets/tmp', $name);
+            }
+             $data['parent_id'] = $parent_id;
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 400,
+                    'errors' => $validator->messages(),
+                ]);
+            } else {
+                $c = Category::create($data);
+                $c->parent_id = $parent_id;
+                $c->save();
+                return response()->json([
+                    'message' => trans('category.success_add_property'),
+                    'status' => 200,
+                ]);
+            }
+        } else {
+            $validator = Validator::make($request->all(), Category::$rules);
+            $data = $request->except('image');
+            if ($request->file('image')) {
+                $name = Str::random(12);
+                $path = $request->file('image');
+                $name = $name . time() . '.' . $request->file('image')->getClientOriginalExtension();
+                $data['image'] = $name;
+                $path->move('assets/tmp', $name);
+            }
+
+            Category::create($data);
+            return response()->json([
+                'message' => trans('category.success_add_property'),
+                'status' => 200,
+            ]);
+//            }
+        }
+    }
 
 
-    public function edit ($id){
+    public function edit($id)
+    {
         $category = Category::find($id);
         if ($category) {
             return response()->json([
@@ -82,32 +144,30 @@ class CategoriesController extends Controller
         }
     }
 
-    public function update (Request $request , $id){
-        //  return $request->hasFile('image');
-        $validator = Validator::make($request->all(), Category::$rules);
+    public function update(Request $request, $id)
+    {
+
         $category = Category::find($id);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 400,
-                'errors' => $validator->messages(),
-            ]);
-        }else if ($category) {
+
+        if ($category) {
             $data = $request->except('image');
-            if ($request->hasFile('image')){
-                $file = $request->file('image');
-                $filename = $file->getClientOriginalName();
-                $local =  request()->getSchemeAndHttpHost();
-                $path = $file->storeAs('category' , $filename ,  ['disk' => 'uploads']);
-                $data['image']  = $local .'/'.'uploads/'.$path;
+
+            if ($request->file('image')) {
+                $name = Str::random(12);
+                $path = $request->file('image');
+                $name = $name . time() . '.' . $request->file('image')->getClientOriginalExtension();
+                $data['image'] = $name;
+                $path->move('assets/tmp', $name);
             }
+
+
             $category->update($data);
             return response()->json([
                 'message' => trans('category.success_update_property'),
                 'status' => 200,
                 'data' => $category
             ]);
-            }
-          else {
+        } else {
             return response()->json([
                 'message' => 'Data Not Found',
                 'status' => 404,
@@ -115,7 +175,8 @@ class CategoriesController extends Controller
         }
     }
 
-    public function delete ($id){
+    public function delete($id)
+    {
         $category = Category::find($id);
         if ($category) {
             $category->delete();
@@ -134,13 +195,51 @@ class CategoriesController extends Controller
 
     public function updateStatus(Request $request)
     {
-        $id = $request->id;
-        $categories = Category::find($id);
-        $categories->status = request('status');
-        $categories->update();
-        return response()->json([
-            // 'message' => 'Update Success',
-            'status' => 200,
-        ]);
+        if ($request->typeint == '1') {
+            $id = $request->id;
+            $categories = Category::find($id);
+            if ($categories->international == '0'){
+                $categories->international = '1';
+            }else{
+                $categories->international = '0';
+            }
+            $categories->save();
+            return response()->json([
+                // 'message' => 'Update Success',
+                'status' => 200,
+            ]);
+        }elseif ($request->typeint == '2'){
+            $id = $request->id;
+            $categories = Category::find($id);
+            if ($categories->home == '0'){
+                $categories->home = '1';
+            }else{
+                $categories->home = '0';
+            }
+            $categories->save();
+            return response()->json([
+                // 'message' => 'Update Success',
+                'status' => 200,
+            ]);
+        } else {
+//            return $request->all();
+            $id = $request->id;
+            $categories = Category::find($id);
+            $categories->status = request('status');
+            $categories->update();
+//            $Products = Product::where('cat_id' , $categories->id)->get();
+//            foreach ($Products as $key){
+//                $Product = Product::where('id' , $key->id)->first();
+//                if ($categories->status == '1'){
+//                }else{
+//                    $Product->status = '0';
+//                }
+//                $Product->update();
+//            }
+            return response()->json([
+                // 'message' => 'Update Success',
+                'status' => 200,
+            ]);
+        }
     }
 }

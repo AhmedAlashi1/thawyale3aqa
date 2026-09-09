@@ -4,16 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ContactsController extends Controller
 {
     public function contact (){
-        // return view('Dashboard.table-basic');
+       
         return view('contact.index');
     }
 
     public function get_contacts (){
-        $contacts = Contact::get();
+//        $contacts = Contact::orderBy('id' , 'desc')->get();
+        $contacts = Contact::latest()->get();
+//        $contacts = DB::table('contact')->latest('created_at')->get();
         if ($contacts) {
             return response()->json([
                 'message' => 'Data Found',

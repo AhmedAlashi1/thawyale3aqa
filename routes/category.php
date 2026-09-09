@@ -24,7 +24,13 @@ Route::group(
     Route::controller(CategoriesController::class)->group(function () {
         Route::get('category', 'category')->name('category');
 
+        Route::get('categories/show/{id}', 'show')->name('category.show');
+
         Route::get('categories/get', 'get_categories')->name('get_categories');
+
+        Route::post('categories/sortable', 'update_sort_order')->name('categories_sortable');
+
+        Route::get('category/show/{id}', 'show_categories')->name('show_categories');
 
         Route::post('category/add' , 'add_category')->name('add_category');
 

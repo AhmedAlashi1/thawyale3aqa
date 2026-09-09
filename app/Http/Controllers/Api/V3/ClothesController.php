@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Api\V3;
 
 use App\Models\Ads;
+use App\Models\Country;
 use App\Models\Categories;
 use App\Models\Clothes;
 use App\Models\DeliveryTypes;
+use App\Models\Fav;
+use App\Models\FixedAds;
+use App\Models\Item;
+use App\Models\Packages;
+use App\Models\Payment;
 use App\Models\Times;
 use App\Repositories\TimesRepository;
 use Carbon\Carbon;
@@ -25,8 +31,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Repositories\Criteria\AdvancedSearchCriteria;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth as JWTAuth;
+use App\Models\Setting;
 
-class ClothesController extends ApiController
+class   ClothesController extends ApiController
 {
 
     use Functions;
@@ -82,7 +89,7 @@ class ClothesController extends ApiController
         $where_obj->pushWhere('status',1,'eq');
         $where_obj->pushWhere('confirm',1,'eq');
         if($request->input('keyword')){
-            $where_obj->pushWhere('title_'.app()->getLocale(),$request->input('keyword'),'contain');
+            $where_obj->pushWhere('title_'.$request->header('lang'),$request->input('keyword'),'contain');
         }
         if($request->input('order')){
            if($request->input('order')==1){
@@ -106,7 +113,7 @@ class ClothesController extends ApiController
         $this->repo->pushCriteria(new AdvancedSearchCriteria());
         $paginate = $this->repo->paginate($length);
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate->items() as $k=>$row){
             $d['data'][$k]['id'] = $row->id;
             $d['data'][$k]['title'] = $row->$title;
@@ -127,32 +134,7 @@ class ClothesController extends ApiController
         return $this->outApiJson(true,'success',['count_total' => $paginate->total(),'nextPageUrl' => $paginate->nextPageUrl(),'pages'=>ceil($paginate->total()/$length),'data'=>$d['data']]);
     }
 
-    public function setting(Request $request)
-    {
-        try {
-            $up_banner=Ads::where(['layout'=>'1','status'=>'1'])->get();
-            $ban=[];
-            foreach($up_banner as $up){
-                $ban[]=['url'=>$up->url,'cat_id'=>$up->cat_id,'product_id'=>$up->product_id,'image'=>url('/').'/assets/tmp/'.$up->image];
-            }
-            $data=[
-                'android_version'=>config('general.version'),
-                'ios_version'=>config('general.version_ios'),
-                'force_update'=>config('general.force_update')==1?true:false,
-                'force_close'=>config('general.force_close')==1?true:false,
-                'whats'=>config('social.picasa'),
-                'snap'=>config('social.youtube'),
-                'instagram'=>config('social.googleplus'),
-                'facebook'=>config('social.facebook'),
-                'twitter'=>config('social.twitter'),
-                'activation_url'=>config('social.whats'),
-                'orders_banners'=>$ban,
-            ];
-            return $this->outApiJson(true,'success',$data);
-        } catch (\PDOException $ex) {
-            return $this->outApiJson(false,'pdo_exception');
-        }
-    }
+
     /**
      * @param Request $request
      * @param $type
@@ -185,7 +167,7 @@ class ClothesController extends ApiController
         $this->repo->pushCriteria(new AdvancedSearchCriteria());
         $paginate = $this->repo->paginate($length);
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate->items() as $k=>$row){
             $d['data'][$k]['id'] = $row->id;
             $d['data'][$k]['title'] = $row->$title;
@@ -220,10 +202,11 @@ class ClothesController extends ApiController
         }
         try{
             $repose = $this->repo->find($request->input('id'));
+
             $data=[];
             if ($repose) {
-                $title='title_'.app()->getLocale();
-                $note='note_'.app()->getLocale();
+                $title='title_'.$request->header('lang');
+                $note='note_'.$request->header('lang');
                 $data['id']=$repose->id;
                 $data['title']=$repose->$title;
                 $data['image']=url('/').'/assets/tmp/'.$repose->image;
@@ -261,155 +244,21 @@ class ClothesController extends ApiController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getData(Request $request)
-    {
-        $up_banner=Ads::where(['layout'=>'1','status'=>'1'])->get();
-        $ban=[];
-        foreach($up_banner as $up){
-            $ban[]=['url'=>$up->url,'cat_id'=>$up->cat_id,'product_id'=>$up->product_id,'image'=>url('/').'/assets/tmp/'.$up->image];
-        }
-        $length = ($request->input('count')) ? $request->input('count') : 20;
-        $perPage = ($request->input('page')) ? $request->input('page') : 1;
-        $parent_id = ($request->input('parent_id')) ? $request->input('parent_id') : 0;
 
-        LengthAwarePaginator::currentPageResolver(function () use ($perPage)
-        {
-            return $perPage;
-        });
-
-//        $where_obj = new \App\Repositories\Criteria\WhereObject();
-        $where_obj =Categories::where('parent_id',$parent_id)->where('status','1')->get();
-
-
-
-        //$where_obj->pushWhere('confirm',1,'eq');
-        if($request->input('keyword')){
-            $where_obj->where('title_'.app()->getLocale(),$request->input('keyword'));
-            $where_obj->where('title_'.app()->getLocale(),'like', '%'.$request->input('keyword') .'%');
-        }
-
-//        $push = new \App\Repositories\Criteria\AdvancedSearchCriteria;
-//        $push::setWhereObject($where_obj);
-
-//        $this->cat->pushCriteria(new  \App\Repositories\Criteria\AdvancedSearchCriteria());
-
-//        $paginate = $this->cat->paginate($length);
-//        Categories::pushCriteria(new AdvancedSearchCriteria());
-        $paginate = Categories::where('parent_id',$parent_id)->where('status','1')->with('products')->paginate($length);
-//        return $paginate;
-        $d['data'] = [];
-
-        $title='title_'.app()->getLocale();
-//        return $paginate;
-        foreach($paginate->items() as $k=>$row){
-            $d['data'][$k]['id'] = $row->id;
-            $d['data'][$k]['title'] = $row->$title;
-            $d['data'][$k]['image']=url('/').'/assets/tmp/thumb/'.$row->image;
-            $d['data'][$k]['products']=$row->products->count();
-//            $d['data'][$k]['subCategory']=$row->sub->count();
-        }
-        //$d['data'] = $paginate->items();
-        $d['recordsTotal'] = $paginate->total();
-        $d['recordsFiltered'] = $paginate->total();
-        return $this->outApiJson(true,'success',['banners'=>$ban,'categories'=>['count_total' => $paginate->total(),'nextPageUrl' => $paginate->nextPageUrl(),'pages'=>ceil($paginate->total()/$length),'data'=>$d['data']]]);
-    }
 
     /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function slider(Request $request)
-    {
-        $length = ($request->input('count')) ? $request->input('count') : 20;
-        $perPage = ($request->input('page')) ? $request->input('page') : 1;
-        $parent_id = ($request->input('parent_id')) ? $request->input('parent_id') : 0;
-        LengthAwarePaginator::currentPageResolver(function () use ($perPage)
-        {
-            return $perPage;
-        });
-        $where_obj = new \App\Repositories\Criteria\WhereObject();
-        $where_obj->pushWhere('status',1,'eq');
-        if($request->input('keyword')){
-            $where_obj->pushWhere('title_'.app()->getLocale(),$request->input('keyword'),'contain');
-        }
-        $where_obj->pushOrder('id','desc');
-        $push = new \App\Repositories\Criteria\AdvancedSearchCriteria;
-        $push::setWhereObject($where_obj);
-        $this->slider->pushCriteria(new AdvancedSearchCriteria());
-        $paginate = $this->slider->paginate($length);
-        $d['data'] = [];
-        $title='title_'.app()->getLocale();
-        foreach($paginate->items() as $k=>$row){
-            $d['data'][$k]['id'] = $row->id;
-            $d['data'][$k]['title'] = $row->$title;
-            $d['data'][$k]['image']=url('/').'/assets/tmp/'.$row->image;
-        }
-        //$d['data'] = $paginate->items();
-        $d['recordsTotal'] = $paginate->total();
-        $d['recordsFiltered'] = $paginate->total();
-        return $this->outApiJson(true,'success',['count_total' => $paginate->total(),'nextPageUrl' => $paginate->nextPageUrl(),'pages'=>ceil($paginate->total()/$length),'data'=>$d['data']]);
-    }
 
-    public function delivery(Request $request)
-    {
-        $length = ($request->input('count')) ? $request->input('count') : 20;
-        $perPage = ($request->input('page')) ? $request->input('page') : 1;
-        LengthAwarePaginator::currentPageResolver(function () use ($perPage)
-        {
-            return $perPage;
-        });
-        $where_obj = new \App\Repositories\Criteria\WhereObject();
-        $where_obj->pushWhere('status',1,'eq');
-        $where_obj->pushOrder('id','desc');
-        $push = new \App\Repositories\Criteria\AdvancedSearchCriteria;
-        $push::setWhereObject($where_obj);
-        $this->dev->pushCriteria(new AdvancedSearchCriteria());
-        $paginate = $this->dev->paginate($length);
-        $d['data'] = [];
-        $title='title_'.app()->getLocale();
-        foreach($paginate->items() as $k=>$row){
-            $d['data'][$k]['id'] = $row->id;
-            $d['data'][$k]['title'] = $row->$title;
-            $d['data'][$k]['price'] = $row->cost;
-            $d['data'][$k]['order_limit'] = $row->order_limit;
-        }
-        //$d['data'] = $paginate->items();
-        $d['recordsTotal'] = $paginate->total();
-        $d['recordsFiltered'] = $paginate->total();
-        return $this->outApiJson(true,'success',['count_total' => $paginate->total(),'nextPageUrl' => $paginate->nextPageUrl(),'pages'=>ceil($paginate->total()/$length),'data'=>$d['data']]);
-    }
-    public function payment(Request $request)
-    {
-        $length = ($request->input('count')) ? $request->input('count') : 20;
-        $perPage = ($request->input('page')) ? $request->input('page') : 1;
-        LengthAwarePaginator::currentPageResolver(function () use ($perPage)
-        {
-            return $perPage;
-        });
-        $where_obj = new \App\Repositories\Criteria\WhereObject();
-        $where_obj->pushWhere('status',1,'eq');
-        $where_obj->pushOrder('id','desc');
-        $push = new \App\Repositories\Criteria\AdvancedSearchCriteria;
-        $push::setWhereObject($where_obj);
-        $this->pay->pushCriteria(new AdvancedSearchCriteria());
-        $paginate = $this->pay->paginate($length);
-        $d['data'] = [];
-        $title='title_'.app()->getLocale();
-        foreach($paginate->items() as $k=>$row){
-            $d['data'][$k]['id'] = $row->id;
-            $d['data'][$k]['title'] = $row->$title;
-        }
-        //$d['data'] = $paginate->items();
-        $d['recordsTotal'] = $paginate->total();
-        $d['recordsFiltered'] = $paginate->total();
-        return $this->outApiJson(true,'success',['count_total' => $paginate->total(),'nextPageUrl' => $paginate->nextPageUrl(),'pages'=>ceil($paginate->total()/$length),'data'=>$d['data']]);
-    }
+
+
     public function times(Request $request)
     {
 
         $paginate = Times::where('status',1)->get();
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate as $k=>$row){
             $d['data'][$k]['id'] = $row->id;
             $d['data'][$k]['title'] = $row->$title;
@@ -421,7 +270,7 @@ class ClothesController extends ApiController
 
         $paginate = DeliveryTypes::where('status',1)->get();
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate as $k=>$row){
             $d['data'][$k]['id'] = $row->id;
             $d['data'][$k]['title'] = $row->$title;
@@ -473,23 +322,14 @@ class ClothesController extends ApiController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function about(Request $request)
-    {
-        try{
-            $data=[
-                'about'=>config('general.about_'.app()->getLocale()),
-                'help'=>config('general.help_'.app()->getLocale()),
-                'privacy'=>config('general.privacy_'.app()->getLocale()),
-                'conditions'=>config('general.conditions_'.app()->getLocale()),
-            ];
-            return $this->outApiJson(true,'success',$data);
-        } catch (\PDOException $ex) {
-            return $this->outApiJson(false,'pdo_exception');
-        }
-    }
+
+
+
     public function home(Request $request)
     {
 
+
+//        return $request->all();
     $user = null;
     try{
             $user = JWTAuth::parseToken()->authenticate();
@@ -498,87 +338,216 @@ class ClothesController extends ApiController
         }
 
         try{
-            $up_banner=Ads::where(['layout'=>'1','status'=>'1'])->get();
 
-            $up_banner2=Ads::where(['layout'=>'3','status'=>'1'])->get();
-            $categories=Categories::where(['status'=>'1','home'=>'1'])->get();
 
-            $hot= Clothes::where('type','1')->where('status','1')->where('confirm','1')->orderBy('sort_order','asc')->limit(50)->get(['*']);
-            $flash= Clothes::where('type','2')->where('status','1')->where('confirm','1')->orderBy('sort_order','asc')->limit(50)->get(['*']);
-            $newest= Clothes::where('type','3')->where('status','1')->where('confirm','1')->orderBy('sort_order','asc')->limit(50)->get(['*']);
-//
+
+
+
+            $up_banner=Ads::where(['layout'=>'1','status'=>'1'])->orderBy('id','desc')->limit(3)->get();
+
+            $up_banner_commercial=Ads::where(['layout'=>'2','status'=>'1'])->orderBy('id','desc')->limit(3)->get();
+
+
+//        return $country;
+            $categories=Categories::where(['status'=>'1','parent_id' => '0'])->orderBy('sort_order','asc')->get();
+//            return $categories;
+//            $fixed_ads= Clothes::where('type','1')->where('status','1')->where('confirm','1')->orderBy('id','asc')->limit(6)->get(['*']);
+            $now=Carbon::now()->format('Y-m-d H:i:s');
+//            $now2=Carbon::now()->addDays(1)->format('Y-m-d H:i:s');
+            $fixed_ads=FixedAds::with('clothes.favorites','clothes.user','clothes.country','clothes.governorates','packages','cat')
+                ->where('end_at','>',$now)
+                ->whereHas('packages' ,function ($q){
+                    $q->where('type',1);
+                })
+                ->where('status','1')
+//                ->where('home', '1')
+                ->whereIn('home', ['1','3'])
+                ->orderBy('created_at','desc')->limit(9)->get(['*']);
+
+//            return $fixed_ads;
+
+            $featured=FixedAds::with('clothes.favorites','clothes.user','clothes.country','clothes.governorates','packages','cat')
+                ->where('end_at','>',$now)
+                ->whereHas('packages' ,function ($q){
+                    $q->where('type',2);
+                })
+                ->where('status','1')
+                ->where('home', '1')
+                ->orderBy('created_at','desc')->limit(9)->get(['*']);
+
+//            $featured= Clothes::where('type','3')->where('status','1')->where('confirm','1')->orderBy('id','asc')->limit(6)->get(['*']);
+
+            $most_watched= Clothes::where('type','1')->where('status','1')->where('confirm','1')
+
+                ->with('user.block','country','governorates')
+                ->orderBy('views','desc')->limit(6)->get(['*']);
+
+            $latest_ads= Clothes::where('type','83')->where('status','1')->where('confirm','1')->with('user','country','governorates')->orderBy('id','desc')->limit(6)->get(['*']);
+
+
+            $country_id= $request->header('country');
+            $country=Country::where('id',$country_id)->where('status','1')->first();
+
 
             $d = [];
-            $title='title_'.app()->getLocale();
-            foreach($hot as $k=>$row){
-                $d[$k]['id'] = $row->id;
-                $d[$k]['title'] = $row->$title;
+            $title='title_'.$request->header('lang');
+            $note='note_'.$request->header('lang');
+            foreach($fixed_ads as $k=>$row){
+                $d[$k]['id'] = $row->clothes->id;
+                $d[$k]['title'] = $row->clothes->$title;
+                $d[$k]['note'] = $row->clothes->$note;
                 $d[$k]['end_date'] = $row->end_date;
-                $d[$k]['price_before'] = $row->price;
-                $d[$k]['price_after'] = $row->price_after;
-                $d[$k]['quntaty'] = $row->quntaty;
-                $d[$k]['order_limit'] = $row->order_limit;
-                $d[$k]['end_offer'] = $row->end_offer;
+                $d[$k]['cat_id'] = $row->clothes->cat_id;
+                $d[$k]['price'] = $row->clothes->price;
+
+                $d[$k]['country'] = ($row->clothes->country) ? $row->clothes->country->$title : null;
+                $d[$k]['coin_name'] =($row->clothes->country) ? $row->clothes->country->coin_name : null;
+
+                $d[$k]['user_id'] = $row->clothes->user->id;
+                $d[$k]['user_email'] = $row->clothes->user->email;
+                $d[$k]['user_mobile_number'] = $row->clothes->user->mobile_number;
+                $d[$k]['user_whats_number'] = $row->clothes->user->whats_number;
+
+                $d[$k]['ishidden'] = $row->clothes->block_user >= 1 ?true : false;
+
+                $d[$k]['chat_icon'] = $row->clothes->chat == 1 ?true : false;
+                $d[$k]['email_icon'] = $row->clothes->email == 1 ?true : false;
+                $d[$k]['sms_icon'] = $row->clothes->sms == 1 ?true : false;
+                $d[$k]['whatsApp_icon'] = $row->clothes->whatsApp == 1 ?true : false;
+                $d[$k]['call_icon'] = $row->clothes->call == 1 ?true : false;
+
+
+
                 if($user) {
-                $d[$k]['fav'] = ($row->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
+                $d[$k]['fav'] = ($row->clothes->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
             }
-                $d[$k]['image']=url('/').'/assets/tmp/'.$row->image;
+                $d[$k]['image']=url('/').'/assets/tmp/'.$row->clothes->image;
             }
             $dd = [];
-            foreach($flash as $k=>$row){
-                $dd[$k]['id'] = $row->id;
-                $dd[$k]['title'] = $row->$title;
+            foreach($featured as $k=>$row){
+                $dd[$k]['id'] = $row->clothes->id;
+                $dd[$k]['title'] = $row->clothes->$title;
+                $dd[$k]['note'] = $row->clothes->$note;
                 $dd[$k]['end_date'] = $row->end_date;
-                $dd[$k]['price_before'] = $row->price;
-                $dd[$k]['price_after'] = $row->price_after;
-                $dd[$k]['quntaty'] = $row->quntaty;
-                $dd[$k]['order_limit'] = $row->order_limit;
-                $dd[$k]['end_offer'] = $row->end_offer;
+                $dd[$k]['cat_id'] = $row->clothes->cat_id;
+                $dd[$k]['price'] = $row->clothes->price;
+                $dd[$k]['country'] = ($row->clothes->country) ? $row->clothes->country->$title : null;
+                $dd[$k]['coin_name'] =($row->clothes->country) ? $row->clothes->country->coin_name : null;
+                $dd[$k]['user_id'] = $row->clothes->user->id;
+                $dd[$k]['user_email'] = $row->clothes->user->email;
+                $dd[$k]['user_mobile_number'] = $row->clothes->user->mobile_number;
+                $dd[$k]['user_whats_number'] = $row->clothes->user->whats_number;
+                $dd[$k]['ishidden'] = $row->clothes->block_user >= 1 ?true : false;
+                $dd[$k]['chat_icon'] = $row->clothes->chat == 1 ?true : false;
+                $dd[$k]['email_icon'] = $row->clothes->email == 1 ?true : false;
+                $dd[$k]['sms_icon'] = $row->clothes->sms == 1 ?true : false;
+                $dd[$k]['whatsApp_icon'] = $row->clothes->whatsApp == 1 ?true : false;
+                $dd[$k]['call_icon'] = $row->clothes->call == 1 ?true : false;
 
                 if($user) {
-                $dd[$k]['fav'] = ($row->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
-            }
-                $dd[$k]['image']=url('/').'/assets/tmp/'.$row->image;
+                    $dd[$k]['fav'] = ($row->clothes->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
+                }
+                $dd[$k]['image']=url('/').'/assets/tmp/'.$row->clothes->image;
             }
             $ddd = [];
-            foreach($newest as $k=>$row){
+            foreach($most_watched as $k=>$row){
                 $ddd[$k]['id'] = $row->id;
                 $ddd[$k]['title'] = $row->$title;
+                $ddd[$k]['note'] = $row->$note;
                 $ddd[$k]['end_date'] = $row->end_date;
-                $ddd[$k]['price_before'] = $row->price;
-                $ddd[$k]['price_after'] = $row->price_after;
-                $ddd[$k]['quntaty'] = $row->quntaty;
-                $ddd[$k]['order_limit'] = $row->order_limit;
-                $ddd[$k]['end_offer'] = $row->end_offer;
+                $ddd[$k]['price'] = $row->price;
+
+                $ddd[$k]['country'] = ($row->country) ? $row->country->$title : null;
+                $ddd[$k]['coin_name'] =($row->country) ? $row->country->coin_name : null;
+
+                $ddd[$k]['cat_id'] = $row->cat_id;
+
+                $ddd[$k]['views'] = $row->views;
+                $ddd[$k]['user_id'] = $row->user->id;
+                $ddd[$k]['user_email'] = $row->user->email;
+                $ddd[$k]['user_mobile_number'] = $row->user->mobile_number;
+                $ddd[$k]['user_whats_number'] = $row->user->whats_number;
+                $ddd[$k]['ishidden'] = $row->block_user >= 1 ?true : false;
+
+                $ddd[$k]['chat_icon'] = $row->chat == 1 ?true : false;
+                $ddd[$k]['email_icon'] = $row->email == 1 ?true : false;
+                $ddd[$k]['sms_icon'] = $row->sms == 1 ?true : false;
+                $ddd[$k]['whatsApp_icon'] = $row->whatsApp == 1 ?true : false;
+                $ddd[$k]['call_icon'] = $row->call == 1 ?true : false;
 
                 if($user) {
-                $ddd[$k]['fav'] = ($row->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
-            }
+                    $ddd[$k]['fav'] = ($row->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
+                }
                 $ddd[$k]['image']=url('/').'/assets/tmp/'.$row->image;
             }
+
+
+            $dddd = [];
+            foreach($latest_ads as $k=>$row){
+                $dddd[$k]['id'] = $row->id;
+                $dddd[$k]['title'] = $row->$title;
+                $dddd[$k]['note'] = $row->$note;
+                $dddd[$k]['end_date'] = $row->end_date;
+                $dddd[$k]['price'] = $row->price;
+                $dddd[$k]['cat_id'] = $row->cat_id;
+
+                $dddd[$k]['country'] = ($row->country) ? $row->country->$title : null;
+                $dddd[$k]['coin_name'] =($row->country) ? $row->country->coin_name : null;
+
+                $dddd[$k]['user_id'] = $row->user->id;
+                $dddd[$k]['user_email'] = $row->user->email;
+                $dddd[$k]['user_mobile_number'] = $row->user->mobile_number;
+                $dddd[$k]['user_whats_number'] = $row->user->whats_number;
+                $dddd[$k]['ishidden'] = $row->block_user >= 1 ?true : false;
+                $dddd[$k]['chat_icon'] = $row->chat == 1 ?true : false;
+                $dddd[$k]['email_icon'] = $row->email == 1 ?true : false;
+                $dddd[$k]['sms_icon'] = $row->sms == 1 ?true : false;
+                $dddd[$k]['whatsApp_icon'] = $row->whatsApp == 1 ?true : false;
+                $dddd[$k]['call_icon'] = $row->call == 1 ?true : false;
+
+                if($user) {
+                    $dddd[$k]['fav'] = ($row->favorites->where('user_id', $user->id) ->count() > 0)?true: false;
+                }
+                $dddd[$k]['image']=url('/').'/assets/tmp/'.$row->image;
+            }
+
+
             $categoriesData = [];
             foreach($categories as $k=>$row){
                 $categoriesData[$k]['id'] = $row->id;
                 $categoriesData[$k]['title'] = $row->$title;
+                $categoriesData[$k]['color'] = $row->color  ;
                 $categoriesData[$k]['image'] = url('/').'/assets/tmp/'.$row->image;
             }
             $ban=[];
 
-            foreach($up_banner as $up){
-                $ban[]=['url'=>$up->url,'cat_id'=>$up->cat_id,'product_id'=>$up->product_id,'image'=>url('/').'/assets/tmp/'.$up->image];
+            foreach($up_banner as $k=>$up){
+                $ban[$k]['url'] = $up->url;
+//                $ban[$k]['cat_id'] = $up->cat_id;
+//                $ban[$k]['product_id'] = $up->product_id;
+                $ban[$k]['image'] = url('/').'/assets/tmp/'.$up->image;
             }
             $ban2=[];
-            foreach($up_banner2 as $up){
-                $ban2[]=['url'=>$up->url,'cat_id'=>$up->cat_id,'product_id'=>$up->product_id,'image'=>url('/').'/assets/tmp/'.$up->image];
+            foreach($up_banner_commercial as $up){
+                $ban2[]=['url'=>$up->url,
+//                    'cat_id'=>$up->cat_id,
+//                    'product_id'=>$up->product_id,
+                    'image'=>url('/').'/assets/tmp/'.$up->image,
+
+                ];
             }
 
             $data=[
                 'up_banner'=>$ban,
-                'up_banner_second'=>$ban2,
+                'up_banner_commercial'=>$ban2,
+
                 'categories'=>$categoriesData,
-                'newest'=>$ddd,
-                'offers'=>$dd,
-                'mostSells'=>$d,
+                'fixed_ads'=>$d,
+                'featured'=>$dd,
+                'most_watched'=>$ddd,
+                'latest_ads'=>$dddd,
+
+
             ];
             return $this->outApiJson(true,'success',$data);
         } catch (\PDOException $ex) {
@@ -587,23 +556,60 @@ class ClothesController extends ApiController
     }
     public function interested(Request $request)
     {
+//        return 'a';
         try{
 //            $newest=$this->repo->getHomeAds(4,500);
-            $newest=Clothes::where('type',4)->where('status',1)->where('confirm',1)->orderBy('sort_order','asc')->limit(500)->get(['*']);
+
+            $country_id= $request->header('country');
+            $country=Country::where('id',$country_id)->where('status','1')->first();
+
+
+            if (empty($country) or $country->id == 3 ){
+                $newest=Clothes::where('type',4)->where('status',1)->where('confirm',1)->orderBy('sort_order','asc')->limit(500)->get(['*']);
+
+            }else{
+
+//                return 'a';
+                $newest=Clothes::where('type',4)->where('international','1')->where('status',1)->where('confirm',1)->orderBy('sort_order','asc')->limit(500)->get(['*']);
+
+            }
             $ddd = [];
             $title='title_'.$request->header('lang');
             foreach($newest as $k=>$row){
                 $ddd[$k]['id'] = $row->id;
                 $ddd[$k]['title'] = $row->$title;
                 $ddd[$k]['end_date'] = $row->end_date;
-                $ddd[$k]['price_before'] = $row->price;
-                $ddd[$k]['price_after'] = $row->price_after;
+
+                if (empty($country)){
+                    $ddd[$k]['price_before'] = $row->price;
+                    $ddd[$k]['price_after'] = $row->price_after;
+                }else{
+                    $ddd[$k]['price_before'] = (string)(round( $row->price  / $country->coin_price,3));
+                    if ($row->price_after != ''){
+                        $ddd[$k]['price_after'] =(string)(round( $row->price_after  / $country->coin_price,3));
+                    }else{
+                        $ddd[$k]['price_after'] = (string)$row->price_after;
+                    }
+
+                }
+//
+//                $ddd[$k]['price_before'] = $row->price;
+//                $ddd[$k]['price_after'] = $row->price_after;
+
                 $ddd[$k]['quntaty'] = $row->quntaty;
                 $ddd[$k]['order_limit'] = $row->order_limit;
                 $ddd[$k]['end_offer'] = $row->end_offer;
+                $ddd[$k]['weight'] = $row->weight;
+                $ddd[$k]['international'] = $row->international;
                 $ddd[$k]['image']=url('/').'/assets/tmp/'.$row->image;
             }
-            return $this->outApiJson(true,'success',$ddd);
+//            return $ddd;
+//            if (!empty($ddd)){
+                return $this->outApiJson(true,'success',$ddd);
+
+//            }else{
+//                return $this->outApiJson(true,'success', 'null');
+//            }
         } catch (\PDOException $ex) {
             return $this->outApiJson(false,'pdo_exception');
         }
@@ -700,7 +706,7 @@ class ClothesController extends ApiController
         $this->fav->pushCriteria(new AdvancedSearchCriteria());
         $paginate = $this->fav->paginate($length);
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate->items() as $k=>$row){
             $d['data'][]=[
                 'id'=>($row->charity)?$row->charity->id:'',
@@ -780,7 +786,7 @@ ini_set('serialize_precision', 10);
         $this->address->pushCriteria(new AdvancedSearchCriteria());
         $paginate = $this->address->paginate($length);
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate->items() as $k=>$row){
             if($this->user->address==$row->id){
                 $d['data'][$k]['default']=true;
@@ -870,4 +876,5 @@ ini_set('serialize_precision', 10);
             return $this->outApiJson(false,'pdo_exception');
         }
     }
+
 }

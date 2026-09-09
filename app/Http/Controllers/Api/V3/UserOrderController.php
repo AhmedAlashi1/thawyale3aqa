@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Api\V3;
 
 use App\Helpers\PusherApp;
 use App\Models\Cart;
+use App\Models\Country;
 use App\Models\Clothes;
 use App\Models\Coupons;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Pieces;
+use App\Models\Setting;
+use App\Models\Status;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -22,11 +26,13 @@ use App\Helpers\Functions;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Repositories\Criteria\AdvancedSearchCriteria;
 use App\Repositories\ReviewRepository;
+use App\Mail\OrderMail;
 
 class UserOrderController extends ApiController
 {
 
     use Functions;
+//    use PusherApp;
 
     private $repo;
     private $repo_status;
@@ -56,10 +62,11 @@ class UserOrderController extends ApiController
 
             return $this->outApiJson(false, 'user_not_found');
         }
-        //check user inactive
-        if ($user->status != 'active') {
-            return $this->outApiJson(false, 'user_inactive');
-        }
+//        //check user inactive
+//        if ($user->status != 'active') {
+//            return $this->outApiJson(false, 'user_inactive');
+//        }
+
 
         if (
             empty($request->input('products')) ||
@@ -69,9 +76,10 @@ class UserOrderController extends ApiController
         ) {
             return $this->outApiJson(false, 'data_required');
         }
-        if ($user->status != 'active') {
-            return $this->outApiJson(false, 'user_inactive');
-        }
+
+//        if ($user->status != 'active') {
+//            return $this->outApiJson(false, 'user_inactive');
+//        }
 
         $data = [];
         $data['user_id'] =  $user->id;
@@ -84,39 +92,82 @@ class UserOrderController extends ApiController
         $data['use_credit'] = $request->input('use_credit');
         $data['total_cost'] = $request->input('total');
         $data['notes'] = $request->input('notes');
+        $data['country_id'] = $request->header('country');
         $data['status'] = 'new';
         $data['user_agent'] = $request->input('type');
+        $data['wallet_payment'] = $request->input('wallet_payment');
+        $data['delivery_cost'] = $request->input('delivery_cost');
         $pro_item = [];
         $ids = [];
         $out = [];
+        $out1 = [];
         $out2 = [];
         $out3 = [];
+
         foreach ($request->input('products') as $item) {
             $pro_item[] = [
                 'clothe_id' => $item['item_id'],
                 'number' => $item['number'],
                 'price' => $item['price'],
             ];
-
+//            return $request->all();
             //delete cart
 //            $order = $this->cart->findWhere(['user_id' =>  $user->id, 'clothe_id' => $item['item_id']])->first();
-            $order = Cart::Where(['user_id' =>  $user->id, 'clothe_id' => $item['item_id']])->first();
-
-            if ($order) {
-                $ids[] = $order->id;
-            }
+//            $order = Cart::Where(['user_id' =>  $user->id, 'clothe_id' => $item['item_id']])->first();
+//
+//
+//            if ($order) {
+//                $ids[] = $order->id;
+//            }
             // edit quantity
 //            $product = $this->cloth->find($item['item_id']);
             $product = Clothes::find($item['item_id']);
 
+            $orders_pices=Pieces::where('clothe_id',$item['item_id'])
+                ->whereHas('order',function ($q){
+                    $q->where('user_id',auth('api')->user()->id);
+                })->with('order')
+                ->get();
             if (!$product) {
                 return $this->outApiJson(false, 'not_found');
             }
+
+            $err_messages3 = [];
+
+            if ($product->order_limit_user){
+                if ($orders_pices->count() > 0 ) {
+                        $pices=  $product->order_limit_user -$orders_pices->sum('number');
+
+                        if ($pices <  $item['number']) {
+
+//                            $err_messages3[]= $product->title_ar.'نعتذر لقد استنفذت الكمية المسموحة لك بطلب المنتج';
+                            $err_messages3[]=' المنتج '.$product->title_ar.' نعتذر الكمية المتاحة لك هي '.$pices;
+                            //return $this->outApiJson(false, 'product_not_available_limit');
+                        }
+                }elseif ($item['number'] > $product->order_limit_user){
+//                    $err_messages3[]= $product->title_ar.'نعتذر لقد استنفذت الكمية المسموحة لك بطلب المنتج';
+                        $err_messages3[]=' المنتج '.$product->title_ar.' نعتذر الكمية المتاحة لك من المنتج هي  '.$product->order_limit_user;
+                }
+            }
+            if (count($err_messages3)>0){
+                $outData = [];
+                $outData['status'] = false;
+                $outData['code'] = 167;
+                $outData['message'] = implode(' - ',$err_messages3);
+                return response()->json($outData, 200);
+            }
+//            $product = Clothes::all();
+//            return $product;
+
+
             $err_messages = [];
             if ($product->status != 1 || $product->quntaty <= 0) {
-                $err_messages[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                $err_messages[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                $err_messages[]=' العدد المسموح به لطلب للمنتج '.$product->title_ar.' هو '.$product->quntaty . ' حبة لكل طلب ';
+                $err_messages[]= $product->title_ar.'نعتذر لقد استنفذت الكمية المسموحة لك بطلب المنتج';
                 //return $this->outApiJson(false, 'product_not_available');
             }
+
             if (count($err_messages)>0){
                 $outData = [];
                 $outData['status'] = false;
@@ -124,13 +175,18 @@ class UserOrderController extends ApiController
                 $outData['message'] = implode(' - ',$err_messages);
                 return response()->json($outData, 200);
             }
+
             $err_messages2 = [];
             if ($product->order_limit) {
                 if ($item['number'] > $product->order_limit) {
-                    $err_messages2[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                    $err_messages2[]=' المنتج '.$product->title_ar.' غير متوفر الكميه والكميه الحاليه منه هى  '.$product->order_limit;
+//                    $err_messages2[]=' العدد المسموح به لطلب للمنتج '.$product->title_ar.' هو '.$product->order_limit . ' حبة لكل طلب ';
+                    $err_messages2[]= $product->title_ar.'نعتذر لقد استنفذت الكمية المسموحة لك بطلب المنتج';
                     //return $this->outApiJson(false, 'product_not_available_limit');
                 }
             }
+
+
             if (count($err_messages2)>0){
                 $outData = [];
                 $outData['status'] = false;
@@ -142,10 +198,22 @@ class UserOrderController extends ApiController
                 $product->quntaty = $product->quntaty - $item['number'];
                 $product->save();
             }
+
+
             $out[]=$product->title_ar;
+            $out1[]=$product->id;
             $out2[]=$item['price'];
             $out3[]=$item['number'];
+
         }
+
+//
+//        $orders_pices=Pieces::whereIn('clothe_id',$out1)
+//            ->whereHas('order',function ($q){
+//                $q->where('user_id',auth('api')->user()->id);
+//            })
+//            ->get();
+//        return $orders_pices;
         try {
             //check promo codes
             if ($request->input('promo_code')) {
@@ -160,8 +228,13 @@ class UserOrderController extends ApiController
                 $promo->save();
                 $data['promo_code'] = $request->input('promo_code');
             }
+
+
+
             $total = $data['total_cost'];
             if ($request->input('use_credit') == 1) {
+                $data['credit'] = $user->credit;
+//                return $request->input('use_credit');
                 if ( $user->credit > $request->input('total')) {
                     $credit = $request->input('total');
                      $user->credit -= $request->input('total');
@@ -173,22 +246,48 @@ class UserOrderController extends ApiController
                 }
                  $user->save();
                 $data['credit'] = $credit;
+
                  $user->promo()->createMany([['user_id' =>  $user->id, 'comment' => 'شراء من طلب ', 'credit' => $credit, 'type' => 2]]);
+                if ($user->credit > 0){
+                    $credit =  $user->credit;
+                    $data['return_credit'] = $credit;
+//                $data['credit'] = '0';
+                }else{
+                    $data['return_credit'] = '0';
+                    $data['credit'] = '0';
+                }
             }
+            $data['driver_id'] = '0';
+//            $data['credit'] = '0';
+//            if ($user->credit > 0){
+//                $credit =  $user->credit;
+//                $data['return_credit'] = $credit;
+////                $data['credit'] = '0';
+//            }else{
+//                $data['return_credit'] = '0';
+////                $data['credit'] = '0';
+//            }
+//            $data['country_id'] = $user->country_id;
+
             $order = Order::create($data);
+
+
+
             if ($order) {
+
                 //create order pices
                 $order->pieces()->createMany($pro_item);
+
                 //delete the cart
-                Cart::whereIn('id',$ids)->delete();
+//                Cart::whereIn('id',$ids)->delete();
 //                $this->cart->deleteAll($ids);
                 // add points to user
-                $points = config('general.points');
+                $points = Setting::where('key_id','points')->first()->value;
                 $user_points = round(($order->total_cost/$points),1);
                  $user->points += $user_points;
                  $user->save();
                 //create order status
-                $this->repo_status->create([
+                Status::create([
                     'order_id' => $order->id,
                     'status' => 'new',
                     'request_time' => Carbon::now(),
@@ -199,15 +298,9 @@ class UserOrderController extends ApiController
                     'order_id' => $order->id,
                     'url' => null,
                 ];
+
                 if ($total > 0) {
                     // add payment
-                    $headers = [
-                        'x-Authorization' => env('PAYMENT_TOKEN'),
-                    ];
-                    $client = new Client([
-                        'base_uri' => 'https://api.upayments.com',
-                        //'headers' => $headers
-                    ]);
                     $sub = substr( $user->mobile_number, 0, 5);
                     $number = substr( $user->mobile_number, 5);
                     if ($sub == '00965') {
@@ -215,41 +308,150 @@ class UserOrderController extends ApiController
                     } else {
                         $numbers =  $user->mobile_number;
                     }
+
+
+                    $apiURL = 'https://api.tap.company';
+//                    $apiKey = 'sk_test_Zcei7lgtRAM6XKof8rY9QFw1';
+                    $apiKey = 'sk_live_QRHvKxnkDctZmP9CYSWFX6gd';
+//        $apiKey = 'sk_test_XKokBfNWv6FIYuTMg5sLPjhJ';
+//
+//                        'form_params' => [
+//
+//
+//
+//
+//                            'ProductName' => json_encode($out),
+//                            'ProductPrice' => json_encode($out2),
+//                            'ProductQty' => json_encode($out3),
+//                            'reference' => $order->id,
+//                        ]
+//                    ]);
                     $pay = Payment::find($request->input('payment_id'));
+//                    return $pay;
                     if (!$pay) {
+//                        return 'a';
                         return $this->outApiJson(false, 'not_found');
                     }
-                    $response = $client->post('/payment-request', [
-                        'form_params' => [
-                            'merchant_id' => env('PAYMENT_MERCHANT'),
-                            'username' => env('PAYMENT_USER'),
-                            'password' => env('PAYMENT_PASSWORD'),
-                            'api_key' => bcrypt(env('PAYMENT_APP_KEY')),
-                            'order_id' => rand(111111111111111, 999999999999999),
-                            'total_price' => $total,
-                            'CurrencyCode' => 'KWD',
-                            'success_url' => route('ordersSuccess'),
-                            'error_url' => route('ordersError'),
-                            'test_mode' => 0,
-                            'whitelabled' => true,
-                            'CstFName' =>  $user->first_name,
-                            //'CstEmail' => $order->id,
-                            'CstMobile' => $numbers,
-                            'payment_gateway' => $pay->slug,
-                            'ProductTitle' => 'دفع فاتوره رقم # ' . $order->id,
+
+                    $currency = Country::where('id' , $user->country_id)->first();
+//                    if($currency){
+//
+//                    }else{
+//                        $currency = 'KWD';
+//                    }
+
+                    if ( $pay->id != 6){
+                        $postFields = [
+                            //Fill required data
+                            'amount' => $total,
+                            'currency' => $currency->slug ?? "KWD",
+//                            'currency' => 'KWD',
+//            'threeDSecure'    => false,
+                            'save_card'    => false,
+                            'description'    =>'دفع فاتوره رقم # ' . $order->id,
+                            'statement_descriptor'    =>  'دفع فاتوره رقم # ' . $order->id,
+                            'metadata'    => [
+                                'udf1'    => 'test 1',
+                                'udf2'    => 'test 2',
+                            ],
+
+                            'reference'    =>  [
+                                'transaction'    => 'txn_0001',
+                                'order'    => $order->id,
+                            ],
+                            'receipt'    =>  [
+                                'email'    => true,
+                                'sms'    => true,
+                            ],
+                            'customer'    =>  [
+                                'first_name'    => $user->first_name,
+
+                                'phone'    => [
+                                    'country_code'    => '965',
+                                    'number'    => $numbers,
+                                ],
+                            ],
+                            'merchant'    =>  [
+                                'id'    => '',
+                            ],
+                            'source'    =>  [
+                                'id'    => $pay->slug,
+//                'id'    => 'src_kw.knet',
+//                'id'    => 'src_card',
+                            ],
+                            'post'    =>  [
+
+                                'url'    =>  route('paymentStatus').'/?order_id='.$order->id,
+
+                            ],
+                            'redirect'    =>  [
+                                'url'    => route('paymentStatus').'/?order_id='.$order->id,
+
+                            ],
                             'ProductName' => json_encode($out),
                             'ProductPrice' => json_encode($out2),
                             'ProductQty' => json_encode($out3),
-                            'reference' => $order->id,
-                        ]
-                    ]);
 
-                    $jsonResponse = json_decode($response->getBody());
-                    //dd($jsonResponse);
-                    if ($jsonResponse->status == 'success') {
-                        $userdata['url'] = $jsonResponse->paymentURL;
+                        ];
+                        $data = $this->executePayment($apiURL, $apiKey, $postFields);
+//                        return $data;
+                        $userdata['url'] = $data->transaction->url;
                     }
+
+//                    $url=$data->transaction->url;
+
+
+//
+//                    $headers = [
+//                        'x-Authorization' => env('PAYMENT_TOKEN'),
+//                    ];
+//                    $client = new Client([
+//                        'base_uri' => 'https://api.upayments.com',
+//                        //'headers' => $headers
+//                    ]);
+//                    $sub = substr( $user->mobile_number, 0, 5);
+//                    $number = substr( $user->mobile_number, 5);
+//                    if ($sub == '00965') {
+//                        $numbers = $number;
+//                    } else {
+//                        $numbers =  $user->mobile_number;
+//                    }
+//                    $pay = Payment::find($request->input('payment_id'));
+//                    if (!$pay) {
+//                        return $this->outApiJson(false, 'not_found');
+//                    }
+//                    $response = $client->post('/payment-request', [
+//                        'form_params' => [
+//                            'merchant_id' => env('PAYMENT_MERCHANT'),
+//                            'username' => env('PAYMENT_USER'),
+//                            'password' => env('PAYMENT_PASSWORD'),
+//                            'api_key' => bcrypt(env('PAYMENT_APP_KEY')),
+//                            'order_id' => rand(111111111111111, 999999999999999),
+//                            'total_price' => $total,
+//                            'CurrencyCode' => 'KWD',
+//                            'success_url' => route('ordersSuccess'),
+//                            'error_url' => route('ordersError'),
+//                            'test_mode' => 0,
+//                            'whitelabled' => true,
+//                            'CstFName' =>  $user->first_name,
+//                            //'CstEmail' => $order->id,
+//                            'CstMobile' => $numbers,
+//                            'payment_gateway' => $pay->slug,
+//                            'ProductTitle' => 'دفع فاتوره رقم # ' . $order->id,
+//                            'ProductName' => json_encode($out),
+//                            'ProductPrice' => json_encode($out2),
+//                            'ProductQty' => json_encode($out3),
+//                            'reference' => $order->id,
+//                        ]
+//                    ]);
+
+//                    $jsonResponse = json_decode($response->getBody());
+//                    //dd($jsonResponse);
+//                    if ($jsonResponse->status == 'success') {
+//                        $userdata['url'] = $jsonResponse->paymentURL;
+//                    }
                 }
+
                 // send notification
                 PusherApp::pushNotifications([
                     'message' => 'هناك طلب جديد في الطلبات الجديده',
@@ -257,80 +459,88 @@ class UserOrderController extends ApiController
                     'id' => $order->id
                 ]);
                 //send email address
-                $emails = explode(',', config('general.emails'));
-                $emails2 = explode(',', config('general.emails2'));
+//                $emails = explode(',', config('general.emails'));
+//                $emails2 = explode(',', config('general.emails2'));
+                $emails = Setting::where('key_id', 'emails')->first()->value;
+                $emails2 = Setting::where('key_id', 'emails2')->first()->value;
+                \Mail::to($emails)->send(new OrderMail($order));
+                \Mail::to($emails2)->send(new OrderMail($order));
+//                \Mail::to('info@ocean-it.co')->send(new OrderMail($order));
+//                \Mail::send('emails.order', ['order' => $order], function ($message) use ($subject, $emails) {
+//                    $message->to($emails)->subject($subject)->from(env('APP_EMAIL'), env('APP_NAME'));
+//                });
 //                $this->sendEmail('emails.order', ['order' => $order], 'new order', $emails);
 //                $this->sendEmail('emails.order', ['order' => $order], 'new order', $emails2);
                 // add order to crm
-                $headers = [
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ];
-                $client = new Client([
-                    'base_uri' => 'https://gpsmajestic.com:9017/',
-                    'headers'=>$headers
-                ]);
-                $response = $client->post('/api/Majestic/Token', [
-                    'body' => json_encode([
-                        'userName' => env('MAJESTIC_USER').' '.env('MAJESTIC_USER_2'),
-                        'password' => env('MAJESTIC_PASSWORD'),
-                    ])
-                ]);
-                $jsonResponse = json_decode($response->getBody());
-                if($jsonResponse->message == 'Success'){
-                    $dataValue = $jsonResponse->dataValue;
-                    $token = $jsonResponse->token;
-                    // add order to crm
-                    $headers = [
-                        'Accept' => 'application/json',
-                        'Content-Type' => 'application/json',
-                        'Authorization' => 'Bearer '.$token,
-                    ];
-                    $client = new Client([
-                        'base_uri' => 'https://gpsmajestic.com:9017/',
-                        'headers'=>$headers
-                    ]);
-                    $response = $client->post('/api/Majestic/SaveJobOrder', [
-                        'body' => json_encode([
-                            'companyId' => $dataValue->companyId,
-                            'userId' => $dataValue->userId,
-                            'orderNo' => 'Hk_'.(string)$order->id,
-                            'orderDate' => Carbon::now()->toIso8601String(),
-                            'orderAmount' => $data['total_cost'],
-                            'deliveryCustomerName' =>  $user->first_name,
-                            'deliveryCustomerMobile' => str_replace('00965','', $user->mobile_number),
-                            'deliveryNotes' => $order->notes,
-                            'deliveryGovernorate' => $order->address?$order->address->cityData->title_ar:'',
-                            'deliveryArea' => $order->address?$order->address->regionData->title_ar:'',
-                            'deliveryBlock' => $order->address?$order->address->block:'',
-                            'deliveryStreet' => $order->address?$order->address->street:'',
-                            'deliveryAvenue' => $order->address?$order->address->avenue:'',
-                            'deliveryBuilding' => $order->address?$order->address->building:'',
-                            'deliveryFloor' => $order->address?$order->address->floor:'',
-                            'deliveryFlat' => $order->address?$order->address->flat:'',
-                            'deliveryAddress' => $order->address?$order->address->address:'',
-                            'deliveryLat' => '0.0',
-                            'deliveryLng' => '0.0',
-                            'paymentMethod' => $order->payment?$order->payment->title_ar:'',
 
-                        ])
-                    ]);
-                    $jsonResponse = json_decode($response->getBody());
-                    //dd($jsonResponse);
-                }
+
+                //ملغي من طرف نادر
+//                $headers = [
+//                    'Accept' => 'application/json',
+//                    'Content-Type' => 'application/json',
+//                ];
+//                $client = new Client([
+//                    'base_uri' => 'https://gpsmajestic.com:9017/',
+//                    'headers'=>$headers
+//                ]);
+//                $response = $client->post('/api/Majestic/Token', [
+//                    'body' => json_encode([
+//                        'userName' => env('MAJESTIC_USER').' '.env('MAJESTIC_USER_2'),
+//                        'password' => env('MAJESTIC_PASSWORD'),
+//                    ])
+//                ]);
+//
+//                $jsonResponse = json_decode($response->getBody());
+//                if($jsonResponse->message == 'Success'){
+//                    $dataValue = $jsonResponse->dataValue;
+//                    $token = $jsonResponse->token;
+//                   //  add order to crm
+//                    $headers = [
+//                        'Accept' => 'application/json',
+//                        'Content-Type' => 'application/json',
+//                        'Authorization' => 'Bearer '.$token,
+//                    ];
+//                    $client = new Client([
+//                        'base_uri' => 'https://gpsmajestic.com:9017/',
+//                        'headers'=>$headers
+//                    ]);
+//                    $response = $client->post('/api/Majestic/SaveJobOrder', [
+//                        'body' => json_encode([
+//                            'companyId' => $dataValue->companyId,
+//                            'userId' => $dataValue->userId,
+//                            'orderNo' => 'Hk_'.(string)$order->id,
+//                            'orderDate' => Carbon::now()->toIso8601String(),
+//                            'orderAmount' => $total,
+//                            'deliveryCustomerName' =>  $user->first_name,
+//                            'deliveryCustomerMobile' => str_replace('00965','', $user->mobile_number),
+//                            'deliveryNotes' => $order->notes,
+//                            'deliveryGovernorate' => $order->address?$order->address->cityData->title_ar:'',
+//                            'deliveryArea' => $order->address?$order->address->regionData->title_ar:'',
+//                            'deliveryBlock' => $order->address?$order->address->block:'',
+//                            'deliveryStreet' => $order->address?$order->address->street:'',
+//                            'deliveryAvenue' => $order->address?$order->address->avenue:'',
+//                            'deliveryBuilding' => $order->address?$order->address->building:'',
+//                            'deliveryFloor' => $order->address?$order->address->floor:'',
+//                            'deliveryFlat' => $order->address?$order->address->flat:'',
+//                            'deliveryAddress' => $order->address?$order->address->address:'',
+//                            'deliveryLat' => '0.0',
+//                            'deliveryLng' => '0.0',
+//                            'paymentMethod' => $order->payment?$order->payment->title_ar:'',
+//
+//                        ])
+//                    ]);
+//                    $jsonResponse = json_decode($response->getBody());
+//                    //dd($jsonResponse);
+//                }
+/// نهاية
                 return $this->outApiJson(true, 'success', $userdata);
             }
+
             return $this->outApiJson(false, 'create_error');
         } catch (\PDOException $ex) {
             return $this->outApiJson(false, 'pdo_exception');
         }catch (RequestException $ex) {
-//            if ($ex->hasResponse()){
-//                if ($ex->getResponse()->getStatusCode()) {
-//                    return ['status' => false, 'response' => $ex->getResponse()->getBody()->getContents(),'code'=>$ex->getResponse()->getStatusCode()];
-//                }
-//            }
-            // return $this->outApiJson(true, 'success',['status' => false, 'response' => $ex->getResponse()->getBody()->getContents(),'code'=>$ex->getResponse()->getStatusCode()]);
-//            return ['status' => false, 'response' => $ex->getResponse()->getBody()->getContents()];
+
             return $this->outApiJson(true, 'success', $userdata);
         } catch (ClientException $ex) {
             //return $this->outApiJson(true, 'success', ['status' => false, 'response' => $ex->getResponse()->getBody() !== null ? $ex->getResponse()->getBody() : $ex->getMessage()]);
@@ -375,6 +585,7 @@ class UserOrderController extends ApiController
 
     public function cart(Request $request)
     {
+        $user = auth('api')->user();
         //check user inactive
         if ( $user->status != 'active') {
             return $this->outApiJson(false, 'user_inactive');
@@ -807,6 +1018,44 @@ class UserOrderController extends ApiController
             return $this->outApiJson(false, 'success');
         } catch (\PDOException $ex) {
             return $this->outApiJson(false, 'pdo_exception');
+        }
+    }
+
+
+
+    function getPayment($apiURL,$charge_id, $apiKey,$requestType)
+    {
+        $json = $this->callAPI("$apiURL/v2/charges/$charge_id", $apiKey,$requestType);
+        return $json;
+    }
+
+    function executePayment($apiURL, $apiKey, $postFields)
+    {
+        $json = $this->callAPI("$apiURL/v2/charges", $apiKey, $postFields);
+        return $json;
+    }
+
+    function callAPI($endpointURL, $apiKey, $postFields = [], $requestType = 'POST')
+    {
+        $curl = curl_init($endpointURL);
+        curl_setopt_array($curl, array(
+            CURLOPT_CUSTOMREQUEST => $requestType,
+            CURLOPT_POSTFIELDS => json_encode($postFields),
+            CURLOPT_HTTPHEADER => array("Authorization: Bearer $apiKey", 'Content-Type: application/json'),
+            CURLOPT_RETURNTRANSFER => true,
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+
+
+        if ($err) {
+            echo "cURL Error #:" . $err;
+        } else {
+            return json_decode($response);
         }
     }
 

@@ -8,9 +8,10 @@ class PusherApp {
     public static function pushNotifications($data = array())
     {
         $options = array(
-            'cluster' => 'eu',
-            'useTLS' => false
+            'cluster' => 'mt1',
+            'useTLS' => true
           );
+      
           $pusher = new Pusher(
             env('PUSHER_KEY'),
             env('PUSHER_SECRET'),

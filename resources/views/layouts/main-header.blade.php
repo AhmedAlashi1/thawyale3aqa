@@ -108,12 +108,12 @@
                                 </div>
                             </div>
                         </div>
-                        <a class="dropdown-item" href="{{url('dashboard/admin/reset_Password')}}"><i
-                                class="bx bx-user-circle"></i>{{trans('users_admin.change_Password')}}</a>
-                        <a class="dropdown-item" href="{{url('dashboard/admin/edit/').'/'.auth()->id()}}"><i
+                        <a class="dropdown-item" href="{{ url('admin/resetPassword') }}"><i
+                                class="bx bx-user-circle"></i>{{trans('main_trans.ch')}}</a>
+                        <a class="dropdown-item" href="{{url('admin/edit/')}}"><i
                                 class="bx bx-cog"></i> {{trans('main_trans.Edit_Profile')}}</a>
-                        <a class="dropdown-item" href="{{url('/')}}"><i class="bx bxs-inbox"></i>Inbox</a>
-                        <a class="dropdown-item" href="{{url('messages')}}"><i
+{{--                        <a class="dropdown-item" href="{{url('/')}}"><i class="bx bxs-inbox"></i>Inbox</a>--}}
+                        <a class="dropdown-item" href="{{url('admin/contact')}}"><i
                                 class="bx bx-envelope"></i>{{trans('main_trans.Messages')}}</a>
                         <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
@@ -126,17 +126,17 @@
                         </form>
                     </div>
                 </div>
-                <div class="dropdown main-header-message right-toggle">
-                    <a class="nav-link pr-0" data-toggle="sidebar-left" data-target=".sidebar-left">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="header-icon-svgs" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="feather feather-menu">
-                            <line x1="3" y1="12" x2="21" y2="12"></line>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <line x1="3" y1="18" x2="21" y2="18"></line>
-                        </svg>
-                    </a>
-                </div>
+{{--                <div class="dropdown main-header-message right-toggle">--}}
+{{--                    <a class="nav-link pr-0" data-toggle="sidebar-left" data-target=".sidebar-left">--}}
+{{--                        <svg xmlns="http://www.w3.org/2000/svg" class="header-icon-svgs" viewBox="0 0 24 24" fill="none"--}}
+{{--                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"--}}
+{{--                            class="feather feather-menu">--}}
+{{--                            <line x1="3" y1="12" x2="21" y2="12"></line>--}}
+{{--                            <line x1="3" y1="6" x2="21" y2="6"></line>--}}
+{{--                            <line x1="3" y1="18" x2="21" y2="18"></line>--}}
+{{--                        </svg>--}}
+{{--                    </a>--}}
+{{--                </div>--}}
             </div>
         </div>
     </div>

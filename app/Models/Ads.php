@@ -10,10 +10,14 @@ class Ads extends Model
     use HasFactory;
     protected $table = "ads";
 
-    protected $fillable = ['url' , 'layout' , 'lauout_title' , 
-    'image' , 'days' , 'cost' ,
-    'status' , 'cat_id' , 'product_id'];
-    
+    protected $fillable = ['title' , 'url' , 'layout' , 'lauout_title' ,
+    'image' , 'days' , 'cost' ,'country_id',
+    'status' , 'cat_id' , 'product_id' , 'multi_product_id','user_id'];
+
+    protected $casts = [
+        'multi_product_id' => 'array'
+    ];
+
     public function categories()
     {
         return $this->belongsTo(Categories::class , 'cat_id'  , 'id');
@@ -21,6 +25,6 @@ class Ads extends Model
 
     public function Products()
     {
-        return $this->belongsTo(Clothes::class , 'product_id'  , 'id');
+        return $this->belongsTo(Advertisements::class , 'product_id'  , 'id');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+
 class Payment_methodsController extends Controller
 {
     public function payment (){
@@ -28,8 +29,18 @@ class Payment_methodsController extends Controller
     }
 
     public function add_payment (Request $request){
+        $data = $request->except('image');
+        if ($request->file('image')) {
+            $name = Str::random(12);
+            $path = $request->file('image');
+            $name = $name . time() . '.' . $request->file('image')->getClientOriginalExtension();
+            $data['image'] = $name;
+            $path->move('assets/tmp', $name);
+        }
+//        return $data['image'];
         $payment =  new Payment();
         $payment->title_ar = $request->title_ar;
+        $payment->image = $data['image'];
         $payment->title_en = $request->title_en;
         $payment->slug = Str::slug($request->title_ar);
         $payment->save();
@@ -58,11 +69,25 @@ class Payment_methodsController extends Controller
 
     public function update (Request $request , $id){
         $payment = Payment::find($id);
+
+
         if ($payment) {
-            $payment->title_ar = $request->title_ar;
-            $payment->title_en = $request->title_en;
-            $payment->slug = Str::slug($request->title_ar);
-            $payment->update();
+
+
+            if ($request->file('image')) {
+
+                $name = Str::random(12);
+                $path = $request->file('image');
+                $name = $name . time() . '.' . $request->file('image')->getClientOriginalExtension();
+                $data['image'] = $name;
+                $path->move('assets/tmp', $name);
+            }
+
+            $data['title_ar'] = $request->title_ar;
+            $data['title_en']= $request->title_en;
+            $data['slug'] = Str::slug($request->title_ar);
+//            return $data;
+            $payment->update($data);
             return response()->json([
                 'message' => trans('category.success_update_property'),
                 'status' => 200,

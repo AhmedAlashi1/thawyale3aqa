@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V3;
 
 use App\Models\Cities;
+use App\Models\Country;
 use App\Models\Governorates;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ApiController;
@@ -44,32 +45,7 @@ class CountriesController extends ApiController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCities(Request $request){
 
-        $areas = Governorates::where(['status'=>1])->get();
-        $data=[];
-        $title = 'title_'.$request->header('lang');
-        foreach ($areas as $row){
-            $zones = Cities::where(['status'=>1,'governorat_id'=>$row->id])->get();
-            $data_zone=[];
-            foreach ($zones as $item){
-                $data_zone[]=[
-                    'id'=>$item->id,
-                    'region_id'=>$item->id,
-                    'title'=>$item->$title,
-                ];
-            }
-            $data[]=[
-                'id'=>$row->id,
-                'city_id'=>$row->id,
-                'title'=>$row->$title,
-                'regions'=>$data_zone,
-
-            ];
-            unset($data_zone);
-        }
-        return $this->outApiJson(true,'success',$data);
-    }
 
     /**
      * @param Request $request

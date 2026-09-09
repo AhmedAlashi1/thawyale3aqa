@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\Cart;
 use App\Models\Categories;
 use App\Models\Clothes;
+use App\Models\Country;
 use App\Models\Coupons;
 use App\Models\Fav;
 use App\Models\Order;
@@ -77,6 +78,7 @@ class UserOrderController extends ApiController
         $data['notes'] = $request->input('notes');
         $data['status'] = 'new';
         $data['user_agent'] = $request->input('type');
+        $data['wallet_payment'] = $request->input('wallet_payment');
         $pro_item = [];
         $ids = [];
         foreach ($request->input('products') as $item) {
@@ -97,7 +99,9 @@ class UserOrderController extends ApiController
             }
             $err_messages = [];
             if ($product->status != 1 || $product->quntaty <= 0) {
-                $err_messages[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                $err_messages[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+                $err_messages[]=' العدد المسموح به لطلب للمنتج '.$product->title_ar.' هو '.$product->quntaty . ' حبة لكل طلب ';
+
                 //return $this->outApiJson(false, 'product_not_available');
             }
             if (count($err_messages)>0){
@@ -110,7 +114,8 @@ class UserOrderController extends ApiController
             $err_messages2 = [];
             if ($product->order_limit) {
                 if ($item['number'] > $product->order_limit) {
-                    $err_messages2[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                    $err_messages2[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+                    $err_messages2[]=' العدد المسموح به لطلب للمنتج '.$product->title_ar.' هو '.$product->quntaty . ' حبة لكل طلب ';
                     //return $this->outApiJson(false, 'product_not_available_limit');
                 }
             }
@@ -516,32 +521,36 @@ class UserOrderController extends ApiController
         }
 
         //check user inactive
-        if ($user->status != 'active') {
-            return $this->outApiJson(false, 'user_inactive');
-        }
+//        if ($user->status != 'active') {
+//            return $this->outApiJson(false, 'user_inactive');
+//        }
 
         if (empty($request->input('id'))) {
             return $this->outApiJson(false, 'data_required');
         }
 
-        $repose = Order::find($request->input('id'));
-//        return $repose;
+        $repose = Order::where('id',$request->input('id'))->with('pieces.clothe')->first();
+        $country_id= $request->header('country');
+        $country=Country::find($country_id);
+
+
         $data = [];
         if ($repose) {
-            $title = 'title_' . app()->getLocale();
+            $title = 'title_' . $request->header('lang');
             $data['id'] = $repose->id;
             $data['status'] = trans('app.status_' . $repose->status);
             $data['total'] = $repose->total_cost;
             $data['payment'] = ($repose->payment) ? $repose->payment->$title : '';
             $data['delivery'] = ($repose->delivery) ? $repose->delivery->$title : '';
-            $data['delivery_cost'] = ($repose->delivery) ? $repose->delivery->cost : '';
+            $data['delivery_cost'] =  ($repose->delivery) ? $repose->delivery->cost : '';
             $data['promo_code'] = $repose->promo?$repose->promo:null;
-//            $data['promo_code_type'] = $repose->promo?$repose->promo->type:1;
-//            if ($repose->promo){
-//                $data['discount'] = $repose->promo->type==1?$repose->promo->discount:$repose->promo->percent;
-//            }else{
-//                $data['discount'] = '';
-//            }
+            $data['promo_code_type'] = $repose->promo_code?$repose->promo->type:1;
+            $data['wallet_payment'] =   (round( $repose->wallet_payment,3)) ?$repose->wallet_payment:null;
+            if ($repose->promo){
+                $data['discount'] = (string) ($repose->promo->type==1?$repose->promo->discount:$repose->promo->percent);
+            }else{
+                $data['discount'] = '';
+            }
             $data['delivery_type'] = $repose->delivery_type;
             $data['delivery_type_title'] = $repose->deliveryTypeTitle?$repose->deliveryTypeTitle->$title:'';
             $data['delivery_date'] = $repose->delivery_date;
@@ -549,6 +558,7 @@ class UserOrderController extends ApiController
             $data['use_credit'] = $repose->use_credit;
             $data['credit'] = $repose->credit;
             $data['notes'] = $repose->notes;
+            $data['country'] = $country;
             if ($repose->address) {
                 $data['cost_delivery'] = ($repose->address->regionData) ? $repose->address->regionData->delivery_cost : null;
                 $data['address'] = [
@@ -584,18 +594,39 @@ class UserOrderController extends ApiController
             $data['from_date'] = $last_activity->diffForHumans();
             $data['created_at'] = $repose->created_at;
             $data['products'] = [];
-            foreach ($repose->pieces as $kk => $item) {
+            $country_id= $request->header('country');
+            $country=Country::where('id',$country_id)->where('status','1')->first();
+
+                foreach ($repose->pieces as $kk => $item) {
+//                    if (!empty($repose->pieces->clothe)){
                 $data['products'][$kk]['title'] = $item->clothe->$title;
-                $data['products'][$kk]['item_id'] = $item->clothe_id;
-                $data['products'][$kk]['image'] = url('/') . '/assets/tmp/' . $item->clothe->image;
-                $data['products'][$kk]['number'] = $item->number;
-                $data['products'][$kk]['price'] = $item->price;
-                $data['products'][$kk]['price_before'] = $item->clothe->price;
-                $data['products'][$kk]['price_after'] = $item->clothe->price_after;
-                $data['products'][$kk]['order_limit'] = $item->clothe->order_limit;
-                $data['products'][$kk]['end_offer'] = $item->clothe->end_offer;
-                $data['products'][$kk]['quntaty'] = $item->clothe->quntaty;
-            }
+                    $data['products'][$kk]['item_id'] = $item->clothe_id;
+                    $data['products'][$kk]['image'] = url('/') . '/assets/tmp/' . $item->clothe->image;
+                    $data['products'][$kk]['number'] = $item->number;
+                    $data['products'][$kk]['price'] = $item->price;
+
+                    if (empty($country)){
+                        $data['products'][$kk]['price_before'] = $item->clothe->price;
+                        $data['products'][$kk]['price_after'] = $item->clothe->price_after;
+                    }else{
+                        $data['products'][$kk]['price_before']= (string)(round( $item->clothe->price  / $country->coin_price,3));
+                        if ($item->price_after != ''){
+                            $data['products'][$kk]['price_after'] =(string)(round( $item->clothe->price_after  / $country->coin_price,3));
+                        }else{
+                            $data['products'][$kk]['price_after'] = (string)$item->clothe->price_after;
+                        }
+
+                    }
+//                $data['products'][$kk]['price_before'] = $item->clothe->price;
+//                $data['products'][$kk]['price_after'] = $item->clothe->price_after;
+                    $data['products'][$kk]['order_limit'] = $item->clothe->order_limit;
+                    $data['products'][$kk]['end_offer'] = $item->clothe->end_offer;
+                    $data['products'][$kk]['quntaty'] = $item->clothe->quntaty;
+                    $data['products'][$kk]['weight'] = $item->clothe->weight;
+                }
+//            }
+
+
             return $this->outApiJson(true, 'success', $data);
         }
         return $this->outApiJson(false, 'pdo_exception');

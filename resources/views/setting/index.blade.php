@@ -36,7 +36,7 @@
 @endsection
 
 @section('content')
-
+    <div class="main-body">
 @if (session('success'))
 <div class="alert alert-success">
     {{ session('success') }}
@@ -78,20 +78,43 @@
                             <textarea class="form-control" name="{{ $x->key_id }}" id="summernote2">@if(isset($x->value)){{$x->value}}@endif</textarea>
                         </div>
                         @elseif($x->key_id == 'force_update')
-                        <div class="col-md-10">
-                            <select name="force_update" class="form-control">
-                                    <option value="1">نعم</option>
-                                    <option value="0">لا</option>
-                            </select>
-                        </div>
+{{--                        <div class="col-md-10">--}}
+{{--                            <select name="force_update" class="form-control">--}}
+{{--                                    <option value="1">نعم</option>--}}
+{{--                                    <option value="0">لا</option>--}}
+{{--                            </select>--}}
+{{--                        </div>--}}
+                                <div class="col-md-10">
+                                    <select   name="force_update" class="form-control" >
+                                        <option @if($x->value  == '1') selected="selected" @endif value="1">نعم</option>
+                                        <option @if($x->value == '0') selected="selected" @endif value="0">لا</option>
+                                    </select>
+                                </div>
                         @elseif($x->key_id == 'force_close')
                         <div class="col-md-10">
-                            <select name="force_close" class="form-control">
-                                    <option value="1">نعم</option>
-                                    <option value="0">لا</option>
-                            </select>
+
+                                <select   name="force_close" class="form-control" >
+                                    <option @if($x->value  == '1') selected="selected" @endif value="1">نعم</option>
+                                    <option @if($x->value == '0') selected="selected" @endif value="0">لا</option>
+                                </select>
+
+
                         </div>
+                            @elseif($x->key_id == 'automatic_acceptance')
+                                <div class="col-md-10">
+
+                                    <select   name="automatic_acceptance" class="form-control" >
+                                        <option @if($x->value  == '1') selected="selected" @endif value="1">نعم</option>
+                                        <option @if($x->value == '0') selected="selected" @endif value="0">لا</option>
+                                    </select>
+
+                                </div>
+
+
                         @else
+
+
+
                         <div class="col-md-10">
                             <textarea id="site_title" name="{{ $x->key_id }}"
                                 class="form-control">@if(isset($x->value)){{$x->value}}@endif</textarea>
@@ -112,6 +135,7 @@
     </div>
     <!--/div-->
 </div>
+    </div>
 @endsection
 @section('js')
 <!-- Internal Data tables -->

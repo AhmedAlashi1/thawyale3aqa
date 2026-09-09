@@ -92,7 +92,8 @@ class UserOrderController extends ApiController
             }
             $err_messages = [];
             if ($product->status != 1 || $product->quntaty <= 0) {
-                $err_messages[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                $err_messages[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+                $err_messages[]=' العدد المسموح به لطلب للمنتج '.$product->title_ar.' هو '.$product->quntaty . ' حبة لكل طلب ';
                 //return $this->outApiJson(false, 'product_not_available');
             }
             if (count($err_messages)>0){
@@ -105,7 +106,8 @@ class UserOrderController extends ApiController
             $err_messages2 = [];
             if ($product->order_limit) {
                 if ($item['number'] > $product->order_limit) {
-                    $err_messages2[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+//                    $err_messages2[]='المنتج '.$product->title_ar.'غير متوفر الكميه والكميه الحاليه منه هى '.$product->quntaty;
+                    $err_messages2[]=' العدد المسموح به لطلب للمنتج '.$product->title_ar.' هو '.$product->quntaty . ' حبة لكل طلب ';
                     //return $this->outApiJson(false, 'product_not_available_limit');
                 }
             }

@@ -8,6 +8,15 @@ return [
     'title' => 'العنوان ',
     'title_en' => 'العنوان (انجليزى)',
     'url' => 'الرابط ',
+
+    'title_country' => 'Countries',
+    'name_en' => 'English name',
+    'name_ar' => 'Arabic name',
+    'coin_name' => 'Coin name',
+    'coin_price' => 'Coin price',
+    'add_country' => 'Add a country',
+    'coin_name_en' => ' English Coin name ',
+
     'second_ar' => 'العنوان الثانى',
     'second_en' => 'العنوان الثانى (انجليزى)',
     'models' => 'Image ',
@@ -20,6 +29,7 @@ return [
     'Status' => 'Status',
     'add' => 'Add Ads',
     'Created_at' => 'Created_at',
+    'sum' => 'Total price up to the current date',
     'js_lang' => [
         'success_add_property' => 'تم اضافة بنر بنجاح',
         'success_update_property' => 'تم تحديث بنر بنجاح',

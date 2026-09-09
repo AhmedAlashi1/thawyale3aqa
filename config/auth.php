@@ -47,7 +47,7 @@ return [
         ],
         'user' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'appUsers',
         ],
 
 
@@ -106,6 +106,12 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => 'password_resets',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'appUsers' => [
+            'provider' => 'app_users',
             'table' => 'password_resets',
             'expire' => 60,
             'throttle' => 60,

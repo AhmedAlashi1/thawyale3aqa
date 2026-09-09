@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class DeliveryTypesController extends Controller
 {
     public function deliveryTypes (){
-        return view('deliverytype.index');
+        return view('DeliveryType.index');
     }
 
     public function get_deliveryTypes (){

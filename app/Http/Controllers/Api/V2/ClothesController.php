@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V2;
 
+use App\Models\Country;
 use App\Models\Delivery;
 use App\Models\Payment;
 use Carbon\Carbon;
@@ -340,21 +341,23 @@ class ClothesController extends ApiController
 
         $length = ($request->input('count')) ? $request->input('count') : 20;
         $perPage = ($request->input('page')) ? $request->input('page') : 1;
-        LengthAwarePaginator::currentPageResolver(function () use ($perPage)
-        {
-            return $perPage;
-        });
-//        $where_obj = new \App\Repositories\Criteria\WhereObject();
-//        $where_obj->pushWhere('status',1,'eq');
-//        $where_obj->pushOrder('id','desc');
-//        $push = new \App\Repositories\Criteria\AdvancedSearchCriteria;
-//        $push::setWhereObject($where_obj);
-//        $this->pay->pushCriteria(new AdvancedSearchCriteria());
-//        $paginate = $this->pay->paginate($length);
-        $paginate =Payment::where('status','1')->orderby('id','desc')->paginate($length);
+
+        $country_id= $request->header('country');
+        $country=Country::where('id',$country_id)->where('status','1')->first();
+        if (empty($country)){
+            $country_id='3';
+        }else{
+            $country_id= $request->header('country');
+        }
+        if ($country_id == 3){
+            $paginate =Payment::where('status','1')->orderby('id','desc')->paginate($length);
+        }else{
+            $paginate =Payment::where('status','1')->where('id' ,'!=', '6')->orderby('id','desc')->paginate($length);
+        }
+
 
         $d['data'] = [];
-        $title='title_'.app()->getLocale();
+        $title='title_'.$request->header('lang');
         foreach($paginate->items() as $k=>$row){
             $d['data'][$k]['id'] = $row->id;
             $d['data'][$k]['title'] = $row->$title;

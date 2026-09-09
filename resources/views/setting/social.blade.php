@@ -31,7 +31,7 @@
 @endsection
 
 @section('content')
-
+    <div class="main-body">
 @if (session('success'))
 <div class="alert alert-success">
     {{ session('success') }}
@@ -112,9 +112,6 @@
 </div>
 <!-- /row -->
 </div>
-<!-- Container closed -->
-</div>
-<!-- main-content closed -->
 @endsection
 @section('js')
 <!-- Internal Data tables -->

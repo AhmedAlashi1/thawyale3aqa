@@ -7,27 +7,52 @@ use App\Models\Role;
 use App\Models\RoleUser;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UsersAndAdminController extends Controller
 {
 
     // Admins
     public function admin (){
+        $admin = User::with('roles')->find(1);
+
+//        return $admin;
         if(Gate::denies('member-view')){
             abort(403);
         }
-        return view('Admin/index');
+        $role = Role::get();
+//        $admins = User::with('roles')->get();
+//        return  $admins;
+//        $admins = DB::table('users')
+//            ->join('role_user', 'users.id', '=', 'role_user.user_id')
+//            ->join('role', 'role_user.role_id', '=', 'role.id')
+//            ->get();
+//        return $admins ;
+
+//        $admins = User::with(['roles' => function ($query) {
+//            $query->select('name');
+//        }])->get('id');
+
+//        return $admins ;
+
+        return view('Admin/index' , compact('role'));
     }
 
     public function get_admins (){
-        $admins = User::get();
+        $admins = User::with('roles')->get();
+//        $role = DB::table('users')
+//            ->join('role_user', 'users.id', '=', 'role_user.user_id')
+//            ->join('role', 'role_user.role_id', '=', 'role.id')
+//            ->get();
         if ($admins) {
             return response()->json([
                 'message' => 'Data Found',
                 'status' => 200,
-                'data' => $admins
+                'data' => $admins,
+//                'role' => $role
             ]);
         } else {
             return response()->json([
@@ -38,18 +63,17 @@ class UsersAndAdminController extends Controller
     }
 
     public function add_admin (Request $request){
-        $role = new Role();
-        $role->name = $request->name;
-        $role->permissions = $request->permissions;
-        $role->save();
+//        return $request->all();
         $admin = new User();
-        $admin->name = $request->user_name;
+        $admin->name = $request->name;
         $admin->email = $request->email;
-        $admin->phone = $request->phone;
+        $admin->mobile = $request->phone ?? "";
+        $admin->type = '1';
+        $admin->user_name = Str::slug($request->name);
         $admin->password = Hash::make($request->password);
         $admin->save();
         $role_user = new RoleUser();
-        $role_user->role_id = $role->id;
+        $role_user->role_id = $request->role;
         $role_user->user_id = $admin->id;
         $role_user->save();
         return response()->json([
@@ -60,7 +84,7 @@ class UsersAndAdminController extends Controller
     }
 
     public function edit ($id){
-        $admin = User::find($id);
+        $admin = User::with('roles')->find($id);
         if ($admin) {
             return response()->json([
                 'message' => 'Data Found',
@@ -76,13 +100,30 @@ class UsersAndAdminController extends Controller
     }
 
     public function update (Request $request , $id){
+//        return $request->all();
         $admin = User::find($id);
         if ($admin) {
             $admin->name = $request->name;
             $admin->email = $request->email;
-            $admin->phone = $request->phone;
-            $admin->password = Hash::make($request->password);
+//            $admin->mobile = $request->phone;
+            $admin->type = $request->role;
+            $admin->user_name = Str::slug($request->name);
+            if ($request->password){
+                $admin->password = bcrypt($request->password);
+            }
             $admin->update();
+            $role = RoleUser::where('user_id' , $id)->first();
+            if ($role){
+                DB::table('role_user')
+                    ->where('user_id' , $id)
+                    ->update(['role_id' => $request->role]);
+            }else{
+                $role_user = new RoleUser();
+                $role_user->role_id = $request->role;
+                $role_user->user_id = $id;
+                $role_user->save();
+            }
+
             return response()->json([
                 'message' => trans('category.success_update_property'),
                 'status' => 200,
@@ -101,7 +142,7 @@ class UsersAndAdminController extends Controller
         if ($admin) {
             $admin->delete();
             return response()->json([
-                'message' => trans('category.success_delete_property'),
+                'message' => trans('category.property_delete_success'),
                 'status' => 200,
             ]);
         } else {
@@ -111,6 +152,67 @@ class UsersAndAdminController extends Controller
             ]);
         }
     }
+
+
+
+
+    public function edit_admin()
+    {
+        $id=auth()->user()->id;
+        $user = User::find($id);
+
+        return view('users_admin.edit',compact('user'));
+    }
+
+    public function update_admin(Request $request)
+    {
+//        return $request->all();
+        $id=$request->id;
+//        return $id;
+        $rules = [
+            'email' => 'required|email|unique:users,email,'.$id,
+        ];
+
+        $validation = $request->validate($rules);
+
+        $users = User::find($id);
+//        return $users;
+        $users->update( $request->all());
+        session()->flash('success', 'تم تعديل المستخدم بنجاح ');
+        return redirect('/');
+    }
+
+    public function reset_Password()
+    {
+        $id=auth()->user()->id;
+        $user = User::find($id);
+        return view('users_admin.reset_password',compact('user'));
+    }
+
+    public function resetPassword(Request $request)
+    {
+//        return $request->all();
+//        dd('a');
+        $rules = [
+            'old_password' => 'required|min:3',
+            'new_password' => 'required|min:3',
+            'confirm_password' => 'required|min:3|same:new_password',
+        ];
+        $validated = $request->validate($rules);
+        $user = auth()->user();
+        if (!Hash::check($request->get('old_password'), $user->password)) {
+            $message = __('api.old_password'); //wrong old
+            return response()->json(['status' => false, 'code' => 400, 'message' => $message,
+                'validator' => $validated]);
+        }
+        $user->password = bcrypt($request->get('new_password'));
+        $data=$user->save();
+        return redirect('/');
+    }
+
+
+
+
 
     //Clients
     public function client (){

@@ -13,6 +13,14 @@ class SettingController extends Controller
         return view('setting.index',compact('settings'));
     }
 
+
+    public function privacy()
+    {
+        $settings=Setting::where('set_group','general')->whereIN('key_id' , ['about_ar','about_en','conditions_ar','conditions_en','privacy_ar','privacy_en','installation','automatic_acceptance','whats_notification_number'])->get();
+//        return  $settings;
+        return view('setting.privacy_settings',compact('settings'));
+    }
+
     public function social()
     {
         $settings=Setting::where('set_group','social')->get();

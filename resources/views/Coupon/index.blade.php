@@ -32,7 +32,25 @@
 @endsection
 
 @section('content')
+    <div class="main-body">
 <div id="error_message"></div>
+        <div class="modal" id="modaldemo8" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">{{ trans('admins.dele') }}</h6><button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ trans('admins.aresure') }}</p><br>
+                        <input class="form-control" name="usernamed" id="usernamed" type="text" readonly="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('admins.close') }}</button>
+                        <button type="submit" class="btn btn-danger" id="dletet">{{ trans('admins.save') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 <div class="modal" id="modalAddCoupon">
     <div class="modal-dialog" role="document">
         <div class="modal-content modal-content-demo">
@@ -69,7 +87,7 @@
                                     name="type" value="1" required></label>
 
                             <label class="col-sm-5">{{ trans('coupons.Percent') }} : <input type="radio" name="type"
-                                    value="0" required></label>
+                                    value="2" required></label>
                         </div>
                         <div class="form-group col-md-12">
                             <label class="col-sm-5"> {{ trans('coupons.Active') }} : <input type="radio" name="status"
@@ -127,11 +145,15 @@
                             <input type="datetime-local" class="form-control" name="end_at" id="end_at" required>
                         </div>
                         <div class="form-group col-md-12">
-                            <label class="col-sm-5">{{ trans('coupons.Fixed_Amount') }} : <input type="radio"
-                                    class="type" name="type" id="type1" value="1" required></label>
+                            <label class="col-sm-5" for="gender">
+                            <label class="col-sm-5">{{ trans('coupons.Fixed_Amount') }} :
+                                <input type="radio" class="type" name="type" id="type1" value="1" required>
+
+                            </label>
 
                             <label class="col-sm-5"> {{ trans('coupons.Percent') }} : <input type="radio" class="type"
-                                    name="type" id="type2" value="0" required></label>
+                                    name="type" id="type2" value="2" required></label>
+                            </label>
                         </div>
                         <div class="form-group col-md-12">
                             <label for="exampleInputEmail1">{{ trans('coupons.Discount') }} :</label>
@@ -190,6 +212,7 @@
                         </thead>
                         <tbody>
                         </tbody>
+
                     </table>
                     @endcan
                 </div>
@@ -197,6 +220,7 @@
         </div>
     </div>
 </div>
+    </div>
 @endsection
 
 @section('js')
@@ -227,6 +251,10 @@ var local = "{{ App::getLocale() }}";
 var table = $('#get_Coupons').DataTable({
     // processing: true,
     ajax: '{!! route("get_coupons") !!}',
+    lengthMenu: [
+        [10, 50 , 200 , 500 , 1000 ,  -1],
+        [10, 50 , 200 , 500 , 1000],
+    ],
     columns: [{
             'data': 'id',
             'className': 'text-center text-lg text-medium'
@@ -282,7 +310,7 @@ var table = $('#get_Coupons').DataTable({
                 <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditCoupon" data-id="${data.id}"><i class="las la-pen"></i></button>
                 @endcan
                 @can('discountCodes-delete')
-                <button class="modal-effect btn btn-sm btn-danger" id="DeleteCoupon" data-id="${data.id}"><i class="las la-trash"></i></button>
+                <button class="modal-effect btn btn-sm btn-danger" id="DeleteCoupon" data-id="${data.id}" data-namee="${data.code}"><i class="las la-trash"></i></button>
                 @endcan
                 `;
             },
@@ -359,6 +387,7 @@ $(document).on('click', '#ShowModalEditCoupon', function(e) {
                 $('#code_limit').val(response.data.code_limit);
                 $('#code_max').val(response.data.code_max);
                 $('#end_at').val(response.data.end_at);
+
                 if (response.data.type == '1') {
                     $("#type1").attr("checked", "checked");
                     $('#discount').val(response.data.discount);
@@ -377,6 +406,8 @@ $(document).on('click', '#ShowModalEditCoupon', function(e) {
 });
 $(document).on('click', '#EditClient', function(e) {
     e.preventDefault();
+    var radios = document.getElementsByName('type');
+    console.log(radios)
     var data = {
         code: $('#code').val(),
         count_number: $('#count_number').val(),
@@ -385,8 +416,10 @@ $(document).on('click', '#EditClient', function(e) {
         code_max: $('#code_max').val(),
         end_at: $('#end_at').val(),
         status: $('.status').val(),
-        status: $('.type').val(),
-        discount: $('#discount').val()
+
+        // type: radios,
+        discount: $('#discount').val(),
+
     };
     // let formdata = new FormData($('#formeditadmin')[0]);
     var id_Coupon = $('#id_Coupon').val();
@@ -425,28 +458,61 @@ $(document).on('click', '#EditClient', function(e) {
         }
     });
 });
+{{--$(document).on('click', '#DeleteCoupon', function(e) {--}}
+{{--    e.preventDefault();--}}
+{{--    var id_Coupon = $(this).data('id');--}}
+{{--    $.ajaxSetup({--}}
+{{--        headers: {--}}
+{{--            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+{{--        }--}}
+{{--    });--}}
+{{--    $.ajax({--}}
+{{--        type: 'DELETE',--}}
+{{--        url: '{{ url("admin/coupons/delete") }}/' + id_Coupon,--}}
+{{--        data: '',--}}
+{{--        contentType: false,--}}
+{{--        processData: false,--}}
+{{--        success: function(response) {--}}
+{{--            $('#error_message').html("");--}}
+{{--            $('#error_message').addClass("alert alert-danger");--}}
+{{--            $('#error_message').text(response.message);--}}
+{{--            table.ajax.reload();--}}
+{{--        }--}}
+{{--    });--}}
+{{--});--}}
+
 $(document).on('click', '#DeleteCoupon', function(e) {
     e.preventDefault();
-    var id_Coupon = $(this).data('id');
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $.ajax({
-        type: 'DELETE',
-        url: '{{ url("admin/coupons/delete") }}/' + id_Coupon,
-        data: '',
-        contentType: false,
-        processData: false,
-        success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
-            table.ajax.reload();
-        }
-    });
+    $('#usernamed').val($(this).data('namee'));
+    var id_admin = $(this).data('id');
+    $('#modaldemo8').modal('show');
+    aaaa(id_admin);
 });
+function aaaa(id) {
+    $(document).off("click", "#dletet").on("click", "#dletet", function (e) {
+        e.preventDefault();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            type: 'DELETE',
+            url: '{{ url("admin/coupons/delete") }}/' + id,
+            data: '',
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $('#error_message').html("");
+                $('#error_message').addClass("alert alert-danger");
+                $('#error_message').text(response.message);
+                $('#modaldemo8').modal('hide');
+                table.ajax.reload();
+            }
+        });
+    });
+}
+
 $(document).on('click', '#status', function(e) {
     e.preventDefault();
     // console.log("Alliiiii");

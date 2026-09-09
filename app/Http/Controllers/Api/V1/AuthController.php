@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\ApiController;
+use App\Models\AppUser;
+use http\Client\Curl\User;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Exceptions\InvalidClaimException;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -15,6 +17,7 @@ use Tymon\JWTAuth\Exceptions\TokenInvalidException as TokenInvalidException;
 use App\Helpers\Functions;
 use Auth;
 use App\Repositories\AppUsersRepository;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends ApiController
 {
@@ -41,25 +44,56 @@ class AuthController extends ApiController
             if (empty($request->input('mobile_number'))) {
                 return $this->outApiJson(false, 'data_required');
             }
+            $user= AppUser::where('mobile_number',$request->input('mobile_number'))->first();
+            if ($user){
+                $user->password = bcrypt($request->input('mobile_number'));
+                $user->save();
+            }
+
+
         try {
             // verify the credentials and create a token for the user
-                if (!$token = JWTAuth::attempt(['mobile_number' => $request->input('mobile_number'), 'password' => $request->input('mobile_number')])) {
-                    return $this->outApiJson(false, 'invalid_credentials');
+                if (!$token = JWTAuth::attempt(['mobile_number' => $request->input('mobile_number'),
+                    'password' => $request->input('mobile_number')])) {
+
+                    return $this->outApiJson(false, 'number_not_registered');
                 }
                 $user = Auth::user();
         } catch (JWTException $e) {
             // something went wrong
             return $this->outApiJson(false,'could_not_create_token');
         }
+        if ($request->input('mobile_number') == '0096512345678' or $request->input('mobile_number') == '0096555558718' ) {
+
+            $activation_code = 1234;
+        } else {
+//            $activation_code = 1234;
+            $activation_code = rand(1111, 9999);
+        }
+
+//        $activation_code = rand(1111, 9999);
+       $user->activation_code = $activation_code;
+       if ($request->input('device_token')){
+           $user->device_token =$request->input('device_token');
+
+       }
+
+        $user->save();
+//        $message_whatsapp = ' كود التفعيل الخاص بك هو ' . $activation_code . '
+//اهلا  بك في تطبيق ذوي الهمم 😀                        ';
+        $message_whatsapp = ' كود التفعيل الخاص بك هو ' . $activation_code . '
+اهلا  بك في تطبيق ذوي الإعاقة 😀                        ';
+        $response = $this->whatsapp($request->input('mobile_number'), $message_whatsapp);
 
         $userdata = [
             'user_id' => $user->id,
             'token' => $token,
             'mobile' => $user->mobile_number,
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'address' => $user->address,
-            'avatar' => asset("assets/tmp/".$user->avatar),
+            'activation_code' => $activation_code,
+//            'first_name' => $user->first_name,
+//            'last_name' => $user->last_name,
+//            'address' => $user->address,
+//            'avatar' => asset("assets/tmp/".$user->avatar),
         ];
         return $this->outApiJson(true,'success',$userdata);
     }
@@ -217,6 +251,93 @@ class AuthController extends ApiController
             return $this->outApiJson(false,'invalid_token');
         }
         return $this->outApiJson(true,'success');
+    }
+    public function whatsappOld($phone , $bode){
+
+
+        $params=array(
+            'token' => 'lnmjhc6925uud3ek',
+            'to' => $phone,
+            'body' =>$bode,
+
+        );
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.ultramsg.com/instance56092/messages/chat",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => http_build_query($params),
+            CURLOPT_HTTPHEADER => array(
+                "content-type: application/x-www-form-urlencoded"
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+            echo "cURL Error #:" . $err;
+        }
+//        else {
+//            echo $response;
+//        }
+
+    }
+
+    public function whatsapp($phone, $body ,$dedupKey = null)
+    {
+//        $instanceId   = $user->whatsapp_instance_id ?? config('services.wawp.instance_id');
+//        $accessToken  = $user->whatsapp_token ?? config('services.wawp.access_token');     // access_token\
+
+        $instanceId= '8D30ABB1E6DA';
+        $accessToken = 'rhS3eDMYV7goCg';
+
+        $chatId = $this->formatWawpChatId($phone , $dedupKey);
+
+        //$url = "https://wawp.net/wp-json/awp/v1/send";
+        $url = "https://api.wawp.net/v2/send/text";
+        $response = Http::timeout(20)->post($url, [
+            'instance_id'   => $instanceId,
+            'access_token'  => $accessToken,
+            'chatId'        => $chatId,
+            'message'       => $body,
+        ]);
+
+
+        return $response;
+    }
+
+    protected function formatWawpChatId(string $phone): string
+    {
+        $phone = trim($phone);
+
+        // لو أصلاً جايك chatId جاهز من webhook
+        if (str_contains($phone, '@c.us') || str_contains($phone, '@g.us') || str_contains($phone, '@lid')) {
+            return $phone;
+        }
+
+        // شيل كل شيء غير أرقام
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        // لو بدأ بـ 00 (مثل 00970...) احذفها
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (str_starts_with($digits, '0')) {
+            $digits =  substr($digits, 1);
+        }
+
+        // الآن صار E.164 بدون +
+        return $digits . '@c.us';
     }
 
 }

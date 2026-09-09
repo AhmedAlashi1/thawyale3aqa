@@ -31,6 +31,7 @@
 @endsection
 
 @section('content')
+    <div class="main-body">
 <div id="error_message"></div>
 <div class="modal" id="modalAddClient">
     <div class="modal-dialog" role="document">
@@ -149,6 +150,7 @@
     </div>
 </div>
 <!--/div-->
+    </div>
 @endsection
 
 @section('js')

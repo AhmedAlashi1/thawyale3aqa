@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 class CitiesController extends Controller
 {
     public function cities (){
-        $Gov = Governorates::get();
+        $Gov = Governorates::orderBy('id','DESC')->get();
         // $Cities = Cities::with('Governorates')->get();
-        // return $Cities;
+//         return $Gov;
         return view('city.index' , compact('Gov'));
     }
 
     public function get_cities (){
-        $cities = Cities::get();
+        $cities = Cities::when(request('governorate_id'),fn($q,$governorate_id)=>$q->where('governorat_id',$governorate_id))->latest()->get();
         if ($cities) {
             return response()->json([
                 'message' => 'Data Found',
@@ -38,12 +38,13 @@ class CitiesController extends Controller
     }
 
     public function show ($id){
-        $cities = Cities::where('governorat_id' , $id)->get();
+
+        $cities = Cities::where('governorat_id' , $id)->latest()->get();
         if ($cities) {
             return response()->json([
                 'message' => 'Data Found',
                 'status' => 200,
-                'data' => $cities 
+                'data' => $cities
             ]);
         } else {
             return response()->json([

@@ -41,33 +41,35 @@ class SmsGateways
 //            $gate_message = 'faild send message';
 //            $status = false;
 //        }
-        $client = new \GuzzleHttp\Client([
-            'base_uri' => 'http://www.kwtsms.com/'
-        ]);
+//        $client = new \GuzzleHttp\Client([
+//            'base_uri' => 'http://www.kwtsms.com/'
+//        ]);
         try {
             $sub = substr($numbers, 0, 2);
             $number = substr($numbers, 2);
             if($sub == 00){
                 $numbers = $number;
             }
-            $response = $client->post('API/send/', ['form_params' => [
-                'username' => env('SMS_USER_NAME'),
-                'password' => env('SMS_PASSWORD'),
-                'sender' => env('SMS_SENDER'),
-                'message' => $message,
-                'mobile' => $numbers,
-                'lang' => 1,
-            ]
-            ]);
-            $jsonResponse = $response->getBody();
-            $result = explode(':',$jsonResponse->getContents());
-            if($result[0]=='OK'){
-                $gate_message =  'success send message';
-                $status = true;
-            }else{
-                $gate_message = $result[1];
-                $status = false;
-            }
+//            $response = $client->post('API/send/', ['form_params' => [
+//                'username' => env('SMS_USER_NAME'),
+//                'password' => env('SMS_PASSWORD'),
+//                'sender' => env('SMS_SENDER'),
+//                'message' => $message,
+//                'mobile' => $numbers,
+//                'lang' => 1,
+//            ]
+//            ]);
+//
+//            $jsonResponse = $response->getBody();
+//
+//            $result = explode(':',$jsonResponse->getContents());
+//            if($result[0]=='OK'){
+//                $gate_message =  'success send message';
+//                $status = true;
+//            }else{
+//                $gate_message = $result[1];
+//                $status = false;
+//            }
         } catch (RequestException $ex) {
             $gate_message = 'faild send message';
             $status = false;

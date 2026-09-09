@@ -11,27 +11,45 @@ class Categories extends Model
     protected $table = "categories";
 
 
-    protected $fillable = ['title_en' , 'title_ar' , 'description_en'  , 'description_ar' , 'image' , 'status','home'];
+    protected $fillable = [
+        'title_en' , 'title_ar' ,  'image' , 'status','parent_id','type','individuals','business','individuals_and_business'
 
-
-//    protected $fillable = ['title_en' , 'title_ar' , 'description_en'  , 'description_ar' , 'image' , 'status'];
+    ];
 
     public static $rules = [
         'title_ar' => 'required|min:3',
         'title_en' => 'required|min:3',
-        'description_en' => 'required|min:3',
-        'description_ar' => 'required|min:3',
-        'image' => 'required',
-    ];
 
-    public function products()
+    ];
+    protected $appends = ['type','cover'];
+
+    public function getTypeAttribute()
     {
-        return $this->hasMany(Clothes::class , 'cat_id' , 'id');
+        return 3;
+
     }
+    public function getCoverAttribute()
+    {
+
+        return null;
+    }
+
+//    public function products()
+//    {
+//        return $this->hasMany(Clothes::class , 'cat_id' , 'id');
+//    }
 
     public function ads()
     {
         return $this->hasMany(Ads::class , 'cat_id' , 'id');
+    }
+        public function sub()
+    {
+        return $this->hasMany('\App\Models\Categories','parent_id','id');
+    }
+    public function packages()
+    {
+        return $this->hasMany('\App\Models\Packages','cat_id','id');
     }
 
 }

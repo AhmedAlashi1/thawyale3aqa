@@ -17,7 +17,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'user_name','is_active','permissions','type',
+        'name', 'email', 'password', 'user_name','is_active','permissions','type','google_id'
     ];
 
     /**
@@ -42,7 +42,8 @@ class User extends Authenticatable
     {
         return $this->hasMany('\App\Models\Messages');
     }
-    
+
+
     public function roles(){
         return $this->belongsToMany(Role::class , 'role_user');
     }

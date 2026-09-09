@@ -101,7 +101,9 @@ return [
     |
     */
 
-    'ttl' => env('JWT_TTL', 60),
+//    'ttl' => env('JWT_TTL', 60),
+    'ttl' => 175200,
+
 
     /*
     |--------------------------------------------------------------------------
@@ -120,7 +122,8 @@ return [
     |
     */
 
-    'refresh_ttl' => env('JWT_REFRESH_TTL', 20160),
+//    'refresh_ttl' => env('JWT_REFRESH_TTL', 20160),
+    'refresh_ttl' => 40160,
 
     /*
     |--------------------------------------------------------------------------
@@ -131,7 +134,12 @@ return [
     |
     */
 
-    'algo' => env('JWT_ALGO', Tymon\JWTAuth\Providers\JWT\Provider::ALGO_HS256),
+//    'algo' => env('JWT_ALGO', Tymon\JWTAuth\Providers\JWT\Provider::ALGO_HS256),
+    'algo' => 'HS256',
+
+    "exp"=> 1426420800,
+
+
 
     /*
     |--------------------------------------------------------------------------

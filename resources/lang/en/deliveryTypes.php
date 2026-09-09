@@ -20,7 +20,7 @@ return [
     'wed' => 'Wednesday',
     'thu' => 'Thursday',
     'fri' => 'Friday',
-    'add' => 'Add Delivery Hours',
+    'add' => 'Add working time',
     '' => '',
     '' => '',
     'js_lang' => [

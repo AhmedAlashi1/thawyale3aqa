@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Country;
 use App\Models\Governorates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 class GovernoratesController extends Controller
 {
     public function governorates (){
-        return view('governorat.index');
+        $Country = Country::get();
+        $Country2 = Country::get();
+        return view('Governorat.index' , compact('Country' , 'Country2'));
     }
 
     public function get_governorates (){
-        $Governorates = Governorates::get();
+        $Governorates = Governorates::when(request('country_id'),fn($q,$country_id)=>$q->where('country_id',$country_id))
+            ->latest()->with('country')->get();
+
         if ($Governorates) {
             return response()->json([
                 'message' => 'Data Found',
@@ -84,5 +89,16 @@ class GovernoratesController extends Controller
                 'status' => 404,
             ]);
         }
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $id = $request->id;
+        $Governorates = Governorates::find($id);
+        $Governorates->status = request('status');
+        $Governorates->update();
+        return response()->json([
+            'status' => 200,
+        ]);
     }
 }

@@ -9,7 +9,7 @@ return [
     'created_at' => 'تاريخ الإنشاء',
     'updated_at' => 'تاريخ التعديل',
     'is_active' => 'مفعل',
-    'add' => 'إضافة أوقات عمل',
+    'add' => 'إضافة ساعات التوصيل',
     'js_lang' => [
         'activated' => 'مفعل',
         'disactivated' => 'غير مفعل',

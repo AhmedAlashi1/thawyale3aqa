@@ -24,6 +24,8 @@ Route::group(
     'middleware' => ['auth']
 ],  function () {
         Route::get('setting/global' , [SettingController::class , 'index'])->name('setting.global');
+        Route::get('setting/privacy' , [SettingController::class , 'privacy'])->name('setting.privacy');
         Route::get('setting/social' , [SettingController::class , 'social'])->name('setting.social');
         Route::post('update/setting/global' , [SettingController::class , 'update'])->name('setting.update');
+
 });

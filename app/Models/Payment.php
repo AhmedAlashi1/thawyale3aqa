@@ -11,7 +11,7 @@ class Payment extends Model
 
     protected $table = "payment";
 
-    protected $fillable = ['title_en' , 'title_ar' , 'slug' , 'status'];
+    protected $fillable = ['title_en' , 'title_ar' , 'slug' , 'status','image'];
 
     public function orders()
     {

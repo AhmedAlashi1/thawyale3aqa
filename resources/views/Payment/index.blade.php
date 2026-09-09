@@ -31,7 +31,25 @@
 @endsection
 
 @section('content')
+    <div class="main-body">
 <div id="error_message"></div>
+        <div class="modal" id="modaldemo8" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">{{ trans('admins.dele') }}</h6><button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ trans('admins.aresure') }}</p><br>
+                        <input class="form-control" name="usernamed" id="usernamed" type="text" readonly="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('admins.close') }}</button>
+                        <button type="submit" class="btn btn-danger" id="dletet">{{ trans('admins.save') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 <div class="modal" id="modalAddPayment">
     <div class="modal-dialog" role="document">
         <div class="modal-content modal-content-demo">
@@ -40,7 +58,7 @@
                     type="button"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                <form id="formPayment" enctype="multipart/form-data">
+                <form id="formPayment"  enctype="multipart/form-data">
                     <div class="row">
                         <div class="form-group col-md-12">
                             <label for="exampleInputEmail1">{{ trans('category.Title_E') }} :</label>
@@ -49,6 +67,10 @@
                         <div class="form-group col-md-12">
                             <label for="exampleInputEmail1">{{ trans('category.Title_A') }} :</label>
                             <input type="text" class="form-control" name="title_ar" required>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label for="exampleInputEmail1">{{ trans('category.Image') }} :</label>
+                            <input type="file" class="form-control" name="image" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -69,7 +91,7 @@
                     type="button"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                <form id="formeditadmin" enctype="multipart/form-data">
+                <form id="formeditadmin"  enctype="multipart/form-data">
                     <input type="hidden" class="form-control" id="id_Payment">
                     <div class="row">
                         <div class="form-group col-md-12">
@@ -80,6 +102,11 @@
                             <label for="exampleInputEmail1">{{ trans('category.Title_A') }} :</label>
                             <input type="text" class="form-control" id="title_ar" name="title_ar" required>
                         </div>
+                        <div class="form-group col-md-12">
+                            <label for="exampleInputEmail1">{{ trans('category.Image') }} :</label>
+                            <input type="file" class="form-control" id="image" name="image" required>
+                        </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success" id="EditClient">{{ trans('category.Save') }}</button>
@@ -116,6 +143,8 @@
                             <tr>
                                 <th class="border-bottom-0">#</th>
                                 <th class="border-bottom-0">{{ trans('app_users.name') }}</th>
+                                <th class="border-bottom-0">{{ trans('category.Image') }}</th>
+
                                 <th class="border-bottom-0">{{ trans('app_users.status') }}</th>
                                 <th class="border-bottom-0">
                                 @canany([ 'paymentMethod-update' , 'paymentMethod-delete' ])
@@ -126,6 +155,7 @@
                         </thead>
                         <tbody>
                         </tbody>
+
                     </table>
                 @endcan
                 </div>
@@ -133,6 +163,7 @@
         </div>
     </div>
 </div>
+    </div>
 @endsection
 
 @section('js')
@@ -163,6 +194,10 @@ var local = "{{ App::getLocale() }}";
 var table = $('#get_Payments').DataTable({
     // processing: true,
     ajax: '{!! route("get_payments") !!}',
+    lengthMenu: [
+        [10, 50 , 200 , 500 , 1000 ,  -1],
+        [10, 50 , 200 , 500 , 1000],
+    ],
     columns: [{
             'data': 'id',
             'className': 'text-center text-lg text-medium'
@@ -181,6 +216,16 @@ var table = $('#get_Payments').DataTable({
         {
             'data': null,
             render: function(data, row, type) {
+                if (data.image) {
+                    return `<img src="{{url('/assets/tmp/')}}/${data.image}" style="width: 40px;height: 40px">`;
+                } else {
+                    return "No Image";
+                }
+            },
+        },
+        {
+            'data': null,
+            render: function(data, row, type) {
                 if (data.status == '1') {
                     return `<button class="btn btn-success-gradient btn-block" id="status" data-id="${data.id}" data-viewing_status="${data.status}">{{ trans('category.Active') }}</button>`;
                 } else {
@@ -191,14 +236,23 @@ var table = $('#get_Payments').DataTable({
         {
             'data': null,
             render: function(data, row, type) {
-                return `
+                if(data.id == 3 || data.id == 4) {
+                    return `
                 @can('paymentMethod-update')
-                <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditPayment" data-id="${data.id}"><i class="las la-pen"></i></button>
+                        <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditPayment" data-id="${data.id}"><i class="las la-pen"></i></button>
                 @endcan
-                @can('paymentMethod-delete')
-                <button class="modal-effect btn btn-sm btn-danger" id="DeletePayment" data-id="${data.id}"><i class="las la-trash"></i></button>
+                    `;
+                }else {
+                    return `
+                @can('paymentMethod-update')
+                    <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditPayment" data-id="${data.id}"><i class="las la-pen"></i></button>
                 @endcan
-                `;
+                    @can('paymentMethod-delete')
+                    <button class="modal-effect btn btn-sm btn-danger" id="DeletePayment" data-id="${data.id}" data-namee="${data.title_ar}"><i class="las la-trash"></i></button>
+                @endcan
+                    `;
+                }
+
             },
             orderable: false,
             searchable: false
@@ -268,8 +322,9 @@ $(document).on('click', '#EditClient', function(e) {
     var data = {
         title_en: $('#title_en').val(),
         title_ar: $('#title_ar').val(),
+        image: $('#image').val(),
     };
-    // let formdata = new FormData($('#formeditadmin')[0]);
+    let formdata = new FormData($('#formeditadmin')[0]);    
     var id_Payment = $('#id_Payment').val();
     console.log(data);
     $.ajaxSetup({
@@ -280,8 +335,9 @@ $(document).on('click', '#EditClient', function(e) {
     $.ajax({
         type: 'POST',
         url: '{{ url("admin/payment/update") }}/' + id_Payment,
-        data: data,
-        dataType: false,
+        data: formdata,
+        contentType: false,
+        processData: false,
         success: function(response) {
             console.log(response);
             if (response.status == 400) {
@@ -306,28 +362,61 @@ $(document).on('click', '#EditClient', function(e) {
         }
     });
 });
+
+{{--$(document).on('click', '#DeletePayment', function(e) {--}}
+{{--    e.preventDefault();--}}
+{{--    var id_Payment = $(this).data('id');--}}
+{{--    $.ajaxSetup({--}}
+{{--        headers: {--}}
+{{--            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+{{--        }--}}
+{{--    });--}}
+{{--    $.ajax({--}}
+{{--        type: 'DELETE',--}}
+{{--        url: '{{ url("admin/payment/delete") }}/' + id_Payment,--}}
+{{--        data: '',--}}
+{{--        contentType: false,--}}
+{{--        processData: false,--}}
+{{--        success: function(response) {--}}
+{{--            $('#error_message').html("");--}}
+{{--            $('#error_message').addClass("alert alert-danger");--}}
+{{--            $('#error_message').text(response.message);--}}
+{{--            table.ajax.reload();--}}
+{{--        }--}}
+{{--    });--}}
+{{--});--}}
+
 $(document).on('click', '#DeletePayment', function(e) {
     e.preventDefault();
-    var id_Payment = $(this).data('id');
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $.ajax({
-        type: 'DELETE',
-        url: '{{ url("admin/payment/delete") }}/' + id_Payment,
-        data: '',
-        contentType: false,
-        processData: false,
-        success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
-            table.ajax.reload();
-        }
-    });
+    $('#usernamed').val($(this).data('namee'));
+    var id_admin = $(this).data('id');
+    $('#modaldemo8').modal('show');
+    aaaa(id_admin);
 });
+function aaaa(id) {
+    $(document).off("click", "#dletet").on("click", "#dletet", function (e) {
+        e.preventDefault();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            type: 'DELETE',
+            url: '{{ url("admin/payment/delete") }}/' + id,
+            data: '',
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $('#error_message').html("");
+                $('#error_message').addClass("alert alert-danger");
+                $('#error_message').text(response.message);
+                $('#modaldemo8').modal('hide');
+                table.ajax.reload();
+            }
+        });
+    });
+}
 $(document).on('click', '#status', function(e) {
     e.preventDefault();
     // console.log("Alliiiii");

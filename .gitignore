@@ -1,2 +1,13 @@
 /vendor
 /node_modules
+.env
+*.phar
+composer-setup.php
+error_log
+public/error_log
+public/.ftpquota
+public/.user.ini
+public/php.ini
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
+client_secret*.json

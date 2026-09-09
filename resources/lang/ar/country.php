@@ -1,15 +1,22 @@
 <?php
 
 return [
-    'content_title' => 'المدن',
+    'content_title' => 'الاحياء',
     'page_title' => 'المدن',
-    'name_ar' => 'أسم المنطقة',
-    'city_name' => 'أسم المنطقة',
+    'name_ar' => 'أسم المنطقة العربي',
+    'city_name' => 'أسم المنطقة الإنجليزي',
     'zon_name' => 'أسم الحى',
+    'delivery_cost' => 'تكلفة التوصيل',
+    'order_limit' => 'حد الطلب',
+    'Governorate' => 'المحافظة',
+    'created_at' => 'تاريخ الإنشاء',
     'page_title_city' => 'عرض كامل المناطق',
     'page_title_zon' => 'عرض كامل الاحياء',
     'add' => 'اضافة محافظات',
+    'addCities' => 'اضافة حي',
     'Cities' => 'احياء المنطقة',
+    'save' => 'حفظ',
+    'close' => 'إلغاء',
     'js_lang' => [
         'success_add' => 'تم اضافة المدينة بنجاح',
         'success_update' => 'تم تحديث المدينة بنجاح',

@@ -67,7 +67,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Kuwait',
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +80,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => 'ar',
 
     /*
     |--------------------------------------------------------------------------
@@ -161,6 +161,7 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+//        \Torann\GeoIP\GeoIPServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -176,6 +177,12 @@ return [
         App\Providers\RouteServiceProvider::class,
         Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
 //        Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
+        Laravel\Socialite\SocialiteServiceProvider::class,
+//        Intervention\Image\ImageServiceProvider::class
+//        Grimzy\LaravelMysqlSpatial\SpatialServiceProvider::class,
+
+
 
     ],
 
@@ -233,7 +240,10 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'JWTAuth' =>Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
-
+        'GeoIP' => \Torann\GeoIP\Facades\GeoIP::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        'Socialite' => Laravel\Socialite\Facades\Socialite::class,
+//        'Image' => Intervention\Image\Facades\Image::class
     ],
 
 ];

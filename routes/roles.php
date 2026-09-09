@@ -24,7 +24,7 @@ Route::group(
 ],  function () {
         Route::resource( 'roles' , RolesController::class);
         Route::get('show/{id}/{user_id}' , [RolesController::class , 'edit_role'])->name('edit_role');
-        Route::post('update/r/{id}/{user_id}' , [RolesController::class , 'update'])->name('edit_role');
+        Route::post('update/r/{id}' , [RolesController::class , 'update'])->name('edit_role');
         Route::get('get_roles' , [RolesController::class , 'get_roles'])->name('get_roles');
         Route::delete('destroy/{id}/{user_id}' , [RolesController::class , 'destroy'])->name('destroy');
 });

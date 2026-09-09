@@ -29,5 +29,15 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'google' => [
+        'client_id' => '159047421108-c4k9rntjv5v7p9lscnbd2pj2or592h0a.apps.googleusercontent.com',
+        'client_secret' => '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',
+        'redirect' => 'http://localhost:8000/authorized/google/callback',
 
+    ],
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'client_secret' => env('APPLE_CLIENT_SECRET'),
+        'redirect' => env('APPLE_REDIRECT_URI')
+    ],
 ];

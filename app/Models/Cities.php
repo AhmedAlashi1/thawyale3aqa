@@ -11,6 +11,11 @@ class Cities extends Model
 
     protected $fillable = ['governorat_id' , 'title_en' , 'title_ar' , 'status' , 'delivery_cost' , 'far_zone' , 'order_limit' , 'status' , 'deleted_at'];
 
+    protected $casts = [
+        'delivery_cost' => 'integer',
+        'far_zone' => 'integer',
+        'order_limit' => 'integer',
+    ];
     public function app_users()
     {
         return $this->hasMany(App_users::class , 'city_id' , 'id');

@@ -22,7 +22,7 @@
     <div class="my-auto">
         <div class="d-flex">
             <h4 class="content-title mb-0 my-auto">{{ trans('coupons.home') }}</h4><span class="text-muted mt-1 tx-13 mr-2 mb-0"> /
-                {{ trans('times.page_title') }}</span>
+                {{trans('menu.times')}}</span>
         </div>
 
     </div>
@@ -32,6 +32,23 @@
 
 @section('content')
 <div id="error_message"></div>
+<div class="modal" id="modaldemo8" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title">{{ trans('admins.dele') }}</h6><button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ trans('admins.aresure') }}</p><br>
+                <input class="form-control" name="usernamed" id="usernamed" type="text" readonly="">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('admins.close') }}</button>
+                <button type="submit" class="btn btn-danger" id="dletet">{{ trans('admins.save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal" id="modalAddDeliveryType">
     <div class="modal-dialog" role="document">
         <div class="modal-content modal-content-demo">
@@ -124,6 +141,7 @@
                         </thead>
                         <tbody>
                         </tbody>
+                
                     </table>
                     @endcan
                 </div>
@@ -163,6 +181,10 @@ var i = 1;
 var table = $('#get_DeliveryTypes').DataTable({
     // processing: true,
     ajax: '{!! route("get_times") !!}',
+    lengthMenu: [
+        [10, 50 , 200 , 500 , 1000 ,  -1],
+        [10, 50 , 200 , 500 , 1000],
+    ],
     columns: [{
             'data': 'id',
             'className': 'text-center text-lg text-medium'
@@ -197,7 +219,7 @@ var table = $('#get_DeliveryTypes').DataTable({
                 <button class="modal-effect btn btn-sm btn-info" id="ShowModalEditDeliveryType" data-id="${data.id}"><i class="las la-pen"></i></button>
                 @endcan
                 @can('workTime-delete')
-                <button class="modal-effect btn btn-sm btn-danger" id="DeleteDeliveryType" data-id="${data.id}"><i class="las la-trash"></i></button>
+                <button class="modal-effect btn btn-sm btn-danger" id="DeleteDeliveryType" data-id="${data.id}" @if(\Illuminate\Support\Facades\App::getLocale() == 'en')data-namee="${ data.title_en}"@else data-namee="${data.title_ar}"@endif><i class="las la-trash"></i></button>
                 @endcan
                 `;
             },
@@ -305,28 +327,61 @@ $(document).on('click', '#EditClient', function(e) {
         }
     });
 });
+
+{{--$(document).on('click', '#DeleteDeliveryType', function(e) {--}}
+{{--    e.preventDefault();--}}
+{{--    var id_DeliveryType = $(this).data('id');--}}
+{{--    $.ajaxSetup({--}}
+{{--        headers: {--}}
+{{--            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+{{--        }--}}
+{{--    });--}}
+{{--    $.ajax({--}}
+{{--        type: 'DELETE',--}}
+{{--        url: '{{ url("admin/times/delete") }}/' + id_DeliveryType,--}}
+{{--        data: '',--}}
+{{--        contentType: false,--}}
+{{--        processData: false,--}}
+{{--        success: function(response) {--}}
+{{--            $('#error_message').html("");--}}
+{{--            $('#error_message').addClass("alert alert-danger");--}}
+{{--            $('#error_message').text(response.message);--}}
+{{--            table.ajax.reload();--}}
+{{--        }--}}
+{{--    });--}}
+{{--});--}}
+
 $(document).on('click', '#DeleteDeliveryType', function(e) {
     e.preventDefault();
-    var id_DeliveryType = $(this).data('id');
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $.ajax({
-        type: 'DELETE',
-        url: '{{ url("admin/times/delete") }}/' + id_DeliveryType,
-        data: '',
-        contentType: false,
-        processData: false,
-        success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
-            table.ajax.reload();
-        }
-    });
+    $('#usernamed').val($(this).data('namee'));
+    var id_admin = $(this).data('id');
+    $('#modaldemo8').modal('show');
+    aaaa(id_admin);
 });
+function aaaa(id) {
+    $(document).off("click", "#dletet").on("click", "#dletet", function (e) {
+        e.preventDefault();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            type: 'DELETE',
+            url: '{{ url("admin/times/delete") }}/' + id,
+            data: '',
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $('#error_message').html("");
+                $('#error_message').addClass("alert alert-danger");
+                $('#error_message').text(response.message);
+                $('#modaldemo8').modal('hide');
+                table.ajax.reload();
+            }
+        });
+    });
+}
 
 $(document).on('click', '#status', function(e) {
     e.preventDefault();
@@ -350,12 +405,10 @@ $(document).on('click', '#status', function(e) {
     });
     $.ajax({
         type: 'POST',
-        url: '{{ route("deliveryTypes.status") }}',
+        url: '{{ route("time.status") }}',
         data: data,
         success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
+
             table.ajax.reload();
         }
     });
@@ -382,12 +435,10 @@ $(document).on('click', '#statusoff', function(e) {
     });
     $.ajax({
         type: 'POST',
-        url: '{{ route("deliveryTypes.status") }}',
+        url: '{{ route("time.status") }}',
         data: data,
         success: function(response) {
-            $('#error_message').html("");
-            $('#error_message').addClass("alert alert-danger");
-            $('#error_message').text(response.message);
+
             table.ajax.reload();
         }
     });

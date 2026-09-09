@@ -21,12 +21,12 @@ class RolesController extends Controller
         // return $array;
         return view('roles.index');
     }
-    
+
     public function get_roles (){
         if(Gate::denies('role-view')){
             abort(403);
         }
-        $roles = Role::withCount('users')->with('users')->get();
+        $roles = Role::withCount('users')->get();
         $pop = config('permission');
         if ($roles) {
             return response()->json([
@@ -48,27 +48,27 @@ class RolesController extends Controller
         $role->name = $request->name;
         $role->permissions = $request->permissions;
         $role->save();
-        $user = new User();
-        $user->name = $request->user_name;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        $user->save();
-        $role_user = new RoleUser();
-        $role_user->role_id = $role->id;
-        $role_user->user_id = $user->id;
-        $role_user->save();
+//        $user = new User();
+//        $user->name = $request->user_name;
+//        $user->email = $request->email;
+//        $user->password = Hash::make($request->password);
+//        $user->save();
+//        $role_user = new RoleUser();
+//        $role_user->role_id = $role->id;
+//        $role_user->user_id = $user->id;
+//        $role_user->save();
     }
 
     public function edit_role($id , $user_id)
     {
         $role = Role::find($id);
-        $user = User::find($user_id);
-        if ($role && $user) {
+        // $user = User::find($user_id);
+        if ($role) {
             return response()->json([
                 'message' => 'Data Found',
                 'status' => 200,
                 'data' => $role,
-                'user' => $user
+                // 'user' => $user
             ]);
         } else {
             return response()->json([
@@ -78,17 +78,12 @@ class RolesController extends Controller
         }
     }
 
-    public function update(Request $request, $id , $user_id)
+    public function update(Request $request, $id)
     {
         $role = Role::find($id);
         $role->name = $request->name;
         $role->permissions = $request->permissions;
         $role->update();
-        $user = User::find($user_id);
-        $user->name = $request->user_name;
-        $user->email = $request->email;
-        $user->password = $request->password;
-        $user->update();
         return response()->json([
             'message' => 'Data Found',
             'status' => 200,

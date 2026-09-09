@@ -41,6 +41,8 @@ return [
     'invalid_credentials' => 'البيانات خطأ',
     'could_not_create_token' => 'غير قادر على انشاء التوكن',
     'user_not_found' => 'المستخدم غير موجود',
+    'mobile_exist' => 'الرقم مستخدم من قبل',
+    'package_order' => 'عفوا لا يمكن تمييز حسابك حاليا حاول في وقت لاحق',
 
     'allow_extention_error' => 'امتداد الملف المرفوع غير صحيح',
     'exceed_activition_code' => 'تم الوصول الى الحد الاقصى لاعادة ارسال الكود',

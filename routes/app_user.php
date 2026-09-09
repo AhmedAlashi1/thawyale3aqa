@@ -26,14 +26,31 @@ Route::group(
 
         Route::get('appUser/get', 'get_appUser')->name('get_appUser');
 
-        // Route::post('category/add' , 'add_category')->name('add_category');
+        Route::get('app_user_address/{id}', 'app_user_address_index')->name('app_user_address');
+
+        Route::get('appUser/get_address/{id}', 'get_app_user_address')->name('get_address');
+
+        Route::post('appUser/add_address/{id}/{type}' , 'add_app_user_address')->name('add_address');
+
+        Route::delete('appUser/add_address/delete/{id}' , 'delete_app_user_address')->name('add_address.delete');
 
         // Route::get('category/edit/{id}' , 'edit')->name('category.edit');
 
         // Route::post('category/update/{id}' , 'update')->name('category.update');
 
+         Route::get('appUser/edit/{id}' , 'edit')->name('appUser.edit');
+
+         Route::post('appUser/update/{id}' , 'update')->name('appUser.update');
+
         Route::delete('appUser/delete/{id}' , 'delete')->name('category.delete');
+
         Route::post('add/appUser' , 'add100')->name('ds');
+
+        Route::get('exportOrders/appUser', 'export')->name('appUser.export');
+        Route::get('appUser/profile/{id}', 'profile')->name('profile');
+        Route::get('appUser/account_transfer/{id}', 'account_transfer')->name('account_transfer');
+        Route::post('appUser/account_transfer/store', 'account_transfer_store')->name('account_transfer_store');
+
     });
 });
 

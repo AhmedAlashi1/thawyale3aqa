@@ -25,6 +25,7 @@ Route::group(
         Route::get('ads', 'ads')->name('ads');
 
         Route::get('ads/get', 'get_ads')->name('get_ads');
+        Route::get('ads/create', 'create')->name('ads.create');
 
         Route::post('ads/add' , 'add_ads')->name('add_ads');
 
